@@ -13,7 +13,9 @@ class CameraNode(Node):
 
         self.frequency_ = 1
 
-        self.cap_ = cv2.VideoCapture(0)#"rtsp://web.nidaku.de:8554/avai")
+        self.cap_ = cv2.VideoCapture(0)#"rtsp://web.nidaku.de:8554/
+        self.cap_.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.cap_.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         self.cv_bridge_ = CvBridge()
 
         self.subscriber_ = self.create_subscription(Float64, "set_frequency", self.callback_set_frequency, 10)
