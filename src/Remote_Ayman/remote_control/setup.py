@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='ubuntu',
     maintainer_email='jwillingmann@web.de',
-    description='TODO: Package description',
+    description='basic remote control for trutlebot',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
