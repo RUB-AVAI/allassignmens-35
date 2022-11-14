@@ -4,7 +4,8 @@ from geometry_msgs.msg import Twist
 from pynput.keyboard import Key, Listener
 from rclpy.qos import qos_profile_system_default
 
-key = "none"
+UPPER_LIMIT_VELOCITY = 0.26
+UPPER_LIMIT_ROTATION = 1.2
 
 
 class Controller(Node):
@@ -41,6 +42,14 @@ class Controller(Node):
                 self.get_logger().info("send")
             elif key.char == "q":
                 rclpy.shutdown()
+            elif key.char == "e":
+                self.mov_keys['w'] += 0.05
+                self.mov_keys['s'] -= 0.05
+                if self.mov_keys['w'] > UPPER_LIMIT_VELOCITY:
+                    self.mov_keys['w'] = UPPER_LIMIT_VELOCITY
+                if self.mov_keys['s'] < -UPPER_LIMIT_VELOCITY:
+                    self.mov_keys['s'] = -UPPER_LIMIT_VELOCITY
+
         except AttributeError:
             pass
 
