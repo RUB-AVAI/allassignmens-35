@@ -5,7 +5,7 @@ from pynput.keyboard import Key, Listener
 from rclpy.qos import qos_profile_system_default
 
 UPPER_LIMIT_VELOCITY = 0.26
-UPPER_LIMIT_ROTATION = 1.2
+UPPER_LIMIT_ROTATION = 1.82
 
 
 class Controller(Node):
@@ -16,7 +16,7 @@ class Controller(Node):
 
         self.mov_keys = {
             'w': .10,
-            's': -0.2,
+            's': -0.10,
             'a':  1.0,
             'd': -1.0,
             "none": 0.0
@@ -49,6 +49,13 @@ class Controller(Node):
                     self.mov_keys['w'] = UPPER_LIMIT_VELOCITY
                 if self.mov_keys['s'] < -UPPER_LIMIT_VELOCITY:
                     self.mov_keys['s'] = -UPPER_LIMIT_VELOCITY
+            elif key.char == "r":
+                self.mov_keys['w'] -= 0.05
+                self.mov_keys['s'] += 0.05
+                if self.mov_keys['w'] < 0:
+                    self.mov_keys['w'] = 0
+                if self.mov_keys['s'] > 0:
+                    self.mov_keys['s'] = 0
 
         except AttributeError:
             pass
