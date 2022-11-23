@@ -23,10 +23,10 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "detection_node = detection_pkg.detection_node.py",
-            "camera_node = detection_pkg.camera_node:main",
-            "image_processing_node = detection_pkg.image_processing_node:main",
-            "gui_node = detection_pkg.gui_node:main"
+            "detection_node = detection_package.detection_node.py",
+            "camera_node = detection_package.camera_node:main",
+            "image_processing_node = detection_package.image_processing_node:main",
+            "gui_node = detection_package.gui_node:main"
         ]
     },
 )
