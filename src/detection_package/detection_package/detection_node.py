@@ -3,6 +3,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from yolov5.models import common
+import cv_bridge
 
 
 class DetectionNode(Node):
@@ -10,12 +11,13 @@ class DetectionNode(Node):
         super().__init__("detection")
         self.subscriber_ = self.create_subscription(Image, "raw_image", self.callback_raw_image, 10)
         self.publisher_ = self.create_publisher(Image, "detected_image", 10)
-        self.weights = 'yolov5s.pt' #Placeholder
-        self.data = 'data/labels.yaml' # Placeholder
+        self.weights = 'yolov5s-int8_edgetpu.tflite' #Placeholder
+        self.data = 'labels.yaml' # Placeholder
         self.device = 'cpu'
         self.dnn = False
         self.half = False
-        self.model = common.DetectMultiBackend(weights=self.weights,device=self.device,dnn=self.dnn,data=self.data,fp16=self.half)
+        self.cv_bridge_ = cv_bridge.CvBridge()
+        self.model = common.DetectMultiBackend(weights=self.weights, device=self.device, dnn=self.dnn, data=self.data, fp16=self.half)
         self.stride = self.model.stride
         self.names = self.model.names
         self.pt = self.model.pt
