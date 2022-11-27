@@ -25,12 +25,12 @@ class GuiNode(Node):
 
         self.cv_bridge_ = CvBridge()
 
-        self.subscriber_ = self.create_subscription(Image, "processed_image", self.callback_processed_image, 10)
+        self.subscriber_ = self.create_subscription(CompressedImage, "processed_image", self.callback_processed_image, 10)
         self.publisher_ = self.create_publisher(Float64, "set_frequency", 10)
 
     def callback_processed_image(self, msg):
         self.get_logger().info("Received processed image.")
-        processed_image = self.cv_bridge_.imgmsg_to_cv2(msg)
+        processed_image = self.cv_bridge_.compressed_imgmsg_to_cv2(msg)
 
         if self.recording:
             cv2.imwrite("Image%d.png" % self.recorded_image_counter, processed_image)
