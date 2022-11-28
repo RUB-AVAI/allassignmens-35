@@ -17,7 +17,7 @@ class GuiNode(Node):
 
     def __init__(self):
         super().__init__("gui_node")
-
+        cv2.namedWindow("Video", cv2.WINDOW_NORMAL)
         self.recording = False
         self.recorded_image_counter = 0
         self.recordOne = False
@@ -31,7 +31,7 @@ class GuiNode(Node):
     def callback_processed_image(self, msg):
         self.get_logger().info("Received processed image.")
         processed_image = self.cv_bridge_.compressed_imgmsg_to_cv2(msg)
-
+        cv2.imshow("Video",processed_image)
         if self.recording:
             cv2.imwrite("Image%d.png" % self.recorded_image_counter, processed_image)
             self.recorded_image_counter += 1
@@ -40,11 +40,11 @@ class GuiNode(Node):
             cv2.imwrite("ManualImage%d.png" % self.manual_recorded_image_counter, processed_image)
             self.manual_recorded_image_counter += 1
 
-        q_image = cv2.cvtColor(processed_image, cv2.COLOR_BGR2RGB)
-        q_image = cv2.flip(q_image, 1)
-        q_image = QImage(q_image.data, q_image.shape[1], q_image.shape[0], QImage.Format_RGB888)
-        q_image = q_image.scaled(640, 480, Qt.KeepAspectRatio)
-        self.hmi.update_image(q_image)
+        #q_image = cv2.cvtColor(processed_image, cv2.COLOR_BGR2RGB)
+        #q_image = cv2.flip(q_image, 1)
+        #q_image = QImage(q_image.data, q_image.shape[1], q_image.shape[0], QImage.Format_RGB888)
+        #q_image = q_image.scaled(640, 480, Qt.KeepAspectRatio)
+        #self.hmi.update_image(q_image)
 
 
 class MainWindow(QWidget):
@@ -55,8 +55,8 @@ class MainWindow(QWidget):
 
         self.VBL = QVBoxLayout()
 
-        self.imageLabel = QLabel()
-        self.VBL.addWidget(self.imageLabel)
+        #self.imageLabel = QLabel()
+        #self.VBL.addWidget(self.imageLabel)
 
         self.saveScreenshotBtn = QPushButton("Save single image")
         self.saveScreenshotBtn.clicked.connect(self.save_screenshot)
