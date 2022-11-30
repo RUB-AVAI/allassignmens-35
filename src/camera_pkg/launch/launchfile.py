@@ -21,5 +21,5 @@ def generate_launch_description():
 
     ld.add_action(camera_node)
     ld.add_action(image_processing_node)
-    ld.add_action(gui_node)
+    #ld.add_action(gui_node)
     return ld
