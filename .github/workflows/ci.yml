@@ -27,10 +27,10 @@ jobs:
       - uses: ros-tooling/setup-ros@v0.3
         with:
           required-ros-distributions: foxy
-      - uses: ros-tooling/action-ros-ci@v0.2
-        with:
-          package-name: remote_control
-          target-ros2-distro: foxy
+     # - uses: ros-tooling/action-ros-ci@v0.2
+      #  with:
+       #   package-name: remote_control
+        #  target-ros2-distro: foxy
       - uses: ros-tooling/action-ros-ci@v0.2
         with:
           package-name: camera_pkg
