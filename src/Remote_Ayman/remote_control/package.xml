@@ -7,10 +7,16 @@
   <maintainer email="jwillingmann@web.de">ubuntu</maintainer>
   <license>TODO: License declaration</license>
 
+  <excec_depend>rclpy</excec_depend>
+  <excec_depend>pynput</excec_depend>
+  <excec_depend>geometry_msg</excec_depend>
+
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
+  <test_depend>unittest</test_depend>
   <test_depend>pynput</test_depend>
 
   <export>

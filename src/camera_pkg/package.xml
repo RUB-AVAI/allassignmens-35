@@ -16,6 +16,7 @@
   <depend>cv_bridge</depend>
   <depend>PyQt5</depend>
   <depend>threading</depend>
+  <depend>yolov5.models.common</depend>
 
   <exec_depend>ros2launch</exec_depend>
 
