@@ -21,7 +21,7 @@ def generate_test_description():
     file_path = os.path.dirname(__file__)
     image_processing_node = launch_ros.actions.Node(
         executable=sys.executable,
-        arguments=[os.path.join(file_path, "..", 'image_processing_node.py')],
+        arguments=[os.path.join(file_path, "..", "camera_pkg", 'image_processing_node.py')],
         additional_env={'PYTHONUNBUFFERED': '1'},
         parameters=[{
         }]
@@ -65,7 +65,7 @@ class TestImageProcessingLink(unittest.TestCase):
 
         try:
             msg = Image()
-            raw_image = cv2.imread("/home/ubuntu/allassignmens-35-main/src/camera_pkg/camera_pkg/test/ManualImage25.png")
+            raw_image = cv2.imread("/home/ubuntu/allassignmens-35/src/camera_pkg/test/ManualImage25.png")
             cv_bridge_ = CvBridge()
             msg = cv_bridge_.cv2_to_imgmsg(raw_image)
             time.sleep(5)
