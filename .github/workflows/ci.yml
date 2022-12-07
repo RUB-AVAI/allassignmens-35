@@ -31,3 +31,7 @@ jobs:
         with:
           package-name: remote_control
           target-ros2-distro: foxy
+      - uses: ros-tooling/action-ros-ci@v0.2
+        with:
+          package-name: camera_pkg
+          target-ros2-distro: foxy
