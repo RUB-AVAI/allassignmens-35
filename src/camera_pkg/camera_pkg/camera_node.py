@@ -11,12 +11,12 @@ class CameraNode(Node):
     def __init__(self):
         super().__init__("camera")
 
-        self.frequency_ = 1
+        self.frequency_ = 0
 
-        self.cap_ = cv2.VideoCapture(0)#"rtsp://web.nidaku.de:8554/
-        #self.cap_ = cv2.imread("./ManualImage25.png")
+        self.cap_ = cv2.VideoCapture(0)  # "rtsp://web.nidaku.de:8554/"
         self.cap_.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cap_.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        #self.cap_ = cv2.imread("/home/ubuntu/allassignmens-35/src/camera_pkg/camera_pkg/ManualImage25.png")
         self.cv_bridge_ = CvBridge()
 
         self.subscriber_ = self.create_subscription(Float64, "set_frequency", self.callback_set_frequency, 10)
@@ -28,6 +28,7 @@ class CameraNode(Node):
 
     def __del__(self):
         self.cap_.release()
+        pass
 
     def callback_set_frequency(self, msg):
         self.get_logger().info("Received new frequency")
@@ -43,7 +44,7 @@ class CameraNode(Node):
             self.get_logger().info("Set timer to frequency " + str(self.frequency_))
 
     def try_and_publish_image(self):
-        ret, frame = self.cap_.read()
+        ret, frame = self.cap_.read()  # True, self.cap_
         if ret:
             self.publisher_.publish(self.cv_bridge_.cv2_to_imgmsg(frame))
             self.get_logger().info("Published raw image.")
