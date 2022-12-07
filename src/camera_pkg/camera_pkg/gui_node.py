@@ -2,10 +2,12 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image, CompressedImage
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Float64MultiArray
 from threading import Thread
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from avai_messages.msg import FloatArray
+from avai_messages.msg import FloatList
 from PyQt5.QtCore import *
 import cv2
 import sys
@@ -22,9 +24,11 @@ class GuiNode(Node):
         self.recorded_image_counter = 0
         self.recordOne = False
         self.manual_recorded_image_counter = 0
+        self.bounding_boxes = []
 
         self.cv_bridge_ = CvBridge()
 
+        self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
         self.subscriber_ = self.create_subscription(CompressedImage, "processed_image", self.callback_processed_image, 10)
         self.publisher_ = self.create_publisher(Float64, "set_frequency", 10)
 
@@ -46,6 +50,18 @@ class GuiNode(Node):
         #q_image = q_image.scaled(640, 480, Qt.KeepAspectRatio)
         #self.hmi.update_image(q_image)
 
+    def callback_process_boundingBox(self,msg):
+        self.get_logger().info("Bounding Boxes arrived")
+        processed_bounding_box = []
+        for lst in msg.lists:
+            box = []
+            for e in lst.elements:
+                box.append(e)
+            self.get_logger().info(str(box))
+        self.bounding_boxes = box
+
+
+        self.get_logger().info("Bounding Boxes processed")
 
 class MainWindow(QWidget):
     node: GuiNode = None
