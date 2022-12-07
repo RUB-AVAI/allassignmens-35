@@ -12,10 +12,11 @@
   <depend>std_msgs</depend>
   <depend>os</depend>
   <depend>sys</depend>
-  <depend>cv2</depend>
+  <depend>python-opencv</depend>
   <depend>cv_bridge</depend>
-  <depend>PyQt5</depend>
+  <depend>pyqt5-dev-tools</depend>
   <depend>threading</depend>
+  <depend>python3-yolov5.models.common</depend>
 
   <exec_depend>ros2launch</exec_depend>
 
