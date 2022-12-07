@@ -29,5 +29,5 @@ jobs:
           required-ros-distributions: foxy
       - uses: ros-tooling/action-ros-ci@v0.2
         with:
-          package-name: demo_package
+          package-name: remote_control
           target-ros2-distro: foxy
