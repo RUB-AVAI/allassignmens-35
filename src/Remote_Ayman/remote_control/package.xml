@@ -9,6 +9,7 @@
 
   <depend>rclpy</depend>
   <depend>pynput-pip</depend>
+  <depend>pynput-pip.keyboard</depend>
   <depend>geometry_msg</depend>
 
 
@@ -18,6 +19,7 @@
   <test_depend>python3-pytest</test_depend>
   <test_depend>python-unittest2</test_depend>
   <test_depend>pynput-pip</test_depend>
+  <test_depend>pynput-pip.keyboard</test_depend>
 
   <export>
     <build_type>ament_python</build_type>
