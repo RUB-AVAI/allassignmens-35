@@ -7,9 +7,9 @@
   <maintainer email="jwillingmann@web.de">ubuntu</maintainer>
   <license>TODO: License declaration</license>
 
-  <excec_depend>rclpy</excec_depend>
-  <excec_depend>pynput</excec_depend>
-  <excec_depend>geometry_msg</excec_depend>
+  <depend>rclpy</depend>
+  <depend>pynput</depend>
+  <depend>geometry_msg</depend>
 
 
   <test_depend>ament_copyright</test_depend>
