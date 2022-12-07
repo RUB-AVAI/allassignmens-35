@@ -9,7 +9,8 @@ import launch_ros.actions
 import launch_testing.actions
 import pytest
 import rclpy
-
+sys.path.append(os.path.dirname(__file__)+"/../camera_pkg")
+from camera_node import CameraNode
 from std_msgs.msg import Float64
 from sensor_msgs.msg import Image
 
@@ -53,11 +54,13 @@ class TestCameraNode(unittest.TestCase):
     def setUp(self):
         # Create a ROS node for tests
         self.node = rclpy.create_node("test_camera_node")
+        self.camera_node = CameraNode()
 
     def tearDown(self):
         self.node.destroy_node()
+        self.camera_node.destroy_node()
 
-    def test_full_node(self, camera, proc_output):
+    def test_try_and_publish_image(self, camera, proc_output):
         msgs_rx = []
 
         sub = self.node.create_subscription(
@@ -89,3 +92,20 @@ class TestCameraNode(unittest.TestCase):
         finally:
             self.node.destroy_subscription(sub)
             self.node.destroy_publisher(pub)
+
+    def test_frequency_callback(self,camera,proc_output):
+        msg = Float64()
+        msg.data = 2.0
+        self.camera_node.callback_set_frequency(msg)
+        self.assertEqual(msg.data, self.camera_node.frequency_)
+
+
+    def test_set_timer(self,camera,proc_output):
+        msg = Float64()
+        msg.data = 2.0
+        self.camera_node.callback_set_frequency(msg)
+        period = 1.0/self.camera_node.frequency_
+        periodTimer = self.camera_node.publish_timer_.timer_period_ns
+        self.assertEqual(period*1000000000,periodTimer/1.0)
+
+
