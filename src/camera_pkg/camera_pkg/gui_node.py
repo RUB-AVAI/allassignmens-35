@@ -58,10 +58,11 @@ class GuiNode(Node):
             for e in lst.elements:
                 box.append(e)
             self.get_logger().info(str(box))
-        self.bounding_boxes = box
-
+            processed_bounding_box.append(box)
+        self.bounding_boxes = processed_bounding_box
 
         self.get_logger().info("Bounding Boxes processed")
+
 
 class MainWindow(QWidget):
     node: GuiNode = None

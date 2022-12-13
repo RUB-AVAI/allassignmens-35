@@ -62,7 +62,6 @@ class TestCameraNode(unittest.TestCase):
 
     def test_try_and_publish_image(self, camera, proc_output):
         msgs_rx = []
-
         sub = self.node.create_subscription(
             Image,
             "raw_image",
@@ -75,6 +74,7 @@ class TestCameraNode(unittest.TestCase):
             10
         )
         time.sleep(2)
+
         try:
             for i in range(1, 3+1):
                 freq = Float64()
@@ -83,6 +83,7 @@ class TestCameraNode(unittest.TestCase):
 
                 end_time = time.time() + 10
                 while time.time() < end_time:
+                    rclpy.spin_once(self.camera_node, timeout_sec=0.1)
                     rclpy.spin_once(self.node, timeout_sec=0.1)
                     if len(msgs_rx) > i*7:
                         break
@@ -98,7 +99,6 @@ class TestCameraNode(unittest.TestCase):
         msg.data = 2.0
         self.camera_node.callback_set_frequency(msg)
         self.assertEqual(msg.data, self.camera_node.frequency_)
-
 
     def test_set_timer(self,camera,proc_output):
         msg = Float64()

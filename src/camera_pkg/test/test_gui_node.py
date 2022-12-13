@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import time
@@ -9,15 +10,14 @@ import launch_ros.actions
 import launch_testing.actions
 import pytest
 import rclpy
+from random import Random
 
-
+from avai_messages.msg import FloatArray, FloatList
 from std_msgs.msg import Float64
-from sensor_msgs.msg import Image
-from PyQt5.QtWidgets import *
+from sensor_msgs.msg import CompressedImage
 
 sys.path.append(os.path.dirname(__file__)+"/../camera_pkg")
 from gui_node import MainWindow, GuiNode
-
 
 @pytest.mark.rostest
 def generate_test_description():
@@ -57,39 +57,51 @@ class TestGuiNode(unittest.TestCase):
 
     def setUp(self):
         # Create a ROS node for tests
-        self.node = rclpy.create_node("test_camera_node")
-        """app = QApplication(sys.argv)
+        self.node = rclpy.create_node("test_gui_node")
         self.gui_node = GuiNode()
-        self.hmi = MainWindow()
-
-        self.hmi.node = self.gui_node
-        self.gui_node.hmi = self.hmi"""
 
     def tearDown(self):
         self.node.destroy_node()
+        self.gui_node.destroy_node()
 
-    def test_gui_set_frequency(self, gui, proc_output):
-        """time.sleep(2)
-        self.hmi = MainWindow.instance
-        msgs_rx = []
+    def test_callback_process_boundingbox(self, gui, proc_output):
+        #msgs_rx = []
+        rand = Random(177013)
 
-        sub = self.node.create_subscription(
-            Float64,
-            "set_frequency",
-            lambda msg: msgs_rx.append(msg),
+        pub = self.node.create_publisher(
+            FloatArray,
+            "bounding_box",
             10
         )
-
-        time.sleep(2)
+        time.sleep(3)
         try:
-            self.hmi.frequencyTxt.setText("2")
+            for i in range(0, 3+1):
+                #create test messages bith random bounding boxes
+                float_array = FloatArray()
 
-            self.hmi.set_recording_frequency()
-            rclpy.spin_once(self.node, timeout_sec=0.1)
-            self.assertGreater(len(msgs_rx), 0, "did no publish frequency")
-            dummy_msg = Float64()
-            dummy_msg.data = 2.0
-            self.assertEqual(msgs_rx[0], dummy_msg, "published frequency is not correct")
+                test_bounding_boxes = []
+                for j in range(i):
+                    bbox = []
+                    for v in range(7):
+                        bbox.append(rand.random())
+                    test_bounding_boxes.append(bbox)
+
+                    float_list = FloatList()
+                    float_list.elements = bbox
+                    float_array.lists.append(float_list)
+
+                #send and receive message
+                pub.publish(float_array)
+
+                end_time = time.time() + 5
+                while time.time() < end_time:
+                    rclpy.spin_once(self.node, timeout_sec=0.1)
+                    rclpy.spin_once(self.gui_node, timeout_sec=0.1)
+                    if i <= 0:
+                        continue
+                    if len(self.gui_node.bounding_boxes) >= i:
+                        break
+
+                self.assertEqual(self.gui_node.bounding_boxes, test_bounding_boxes, f"The {i} bounding boxrs were not processed correctly.")
         finally:
-            self.node.destroy_subscription(sub)
-        """
+            self.node.destroy_publisher(pub)
