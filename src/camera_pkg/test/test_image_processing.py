@@ -68,7 +68,7 @@ class TestImageProcessingLink(unittest.TestCase):
             raw_image = cv2.imread("/home/ubuntu/allassignmens-35/src/camera_pkg/test/ManualImage25.png")
             cv_bridge_ = CvBridge()
             msg = cv_bridge_.cv2_to_imgmsg(raw_image)
-            time.sleep(5)
+            time.sleep(10)
             pub.publish(msg)
             #Wait until the talker transmits two messages over the ROS topic
             end_time = time.time() + 10
