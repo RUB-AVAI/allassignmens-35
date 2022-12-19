@@ -15,8 +15,8 @@ from avai_messages.msg import FloatList
 from cv_bridge import CvBridge
 
 # launch ros2 from /allassignmens/src/
-MODEL_PATH = "./camera_pkg/camera_pkg/ml_models/best-int8_edgetpu.tflite"  # "/home/ubuntu/allassingmens-35/src/camera_pkg/camera_pkg/best-int8_edgetpu.tflite"
-#MODEL_PATH = "./camera_pkg/camera_pkg/ml_models/best.pt"  # "/home/ubuntu/allassignmens-35/src/camera_pkg/camera_pkg/best.pt"
+#MODEL_PATH = "./camera_pkg/camera_pkg/ml_models/best-int8_edgetpu.tflite"  # "/home/ubuntu/allassingmens-35/src/camera_pkg/camera_pkg/best-int8_edgetpu.tflite"
+MODEL_PATH = "./camera_pkg/camera_pkg/ml_models/best.pt"  # "/home/ubuntu/allassignmens-35/src/camera_pkg/camera_pkg/best.pt"
 LABEL_PATH = "./camera_pkg/camera_pkg/ml_models/labels.yaml"  # "/home/ubuntu/allassingmens-35/src/camera_pkg/camera_pkg/labels.yaml"
 
 
@@ -35,41 +35,41 @@ class ImageProcessingNode(Node):
         self.get_logger().info("Image Processor started.")
 
     def callback_raw_image(self, msg):
-        self.get_logger().info("Received raw image.")
-        raw_image = self.cv_bridge_.imgmsg_to_cv2(msg)
+            self.get_logger().info("Received raw image.")
+            raw_image = self.cv_bridge_.imgmsg_to_cv2(msg)
 
-        raw_image = cv2.cvtColor(raw_image, cv2.COLOR_RGB2BGR)
-        detect = self.interpreter(raw_image)
-        detect.render()
+            raw_image = cv2.cvtColor(raw_image, cv2.COLOR_RGB2BGR)
+            detect = self.interpreter(raw_image)
+            detect.render()
 
-        boxes = detect.pandas().xywhn[0].to_numpy().astype(np.float)
+            boxes = detect.pandas().xywhn[0].iloc[:,0:6].to_numpy().astype(np.float)
 
-        bounding_Boxes = []
-        for i in range(0,len(boxes)):
-            new_box = []
-            for j in range(0,len(boxes[0])):
-                new_box.append(boxes[i][j])
+            bounding_Boxes = []
+            for i in range(0,len(boxes)):
+                new_box = []
+                for j in range(0,len(boxes[0])):
+                    new_box.append(boxes[i][j])
 
-            bounding_Boxes.append(new_box)
+                bounding_Boxes.append(new_box)
 
-        float_array = FloatArray()
+            float_array = FloatArray()
 
-        for p in range(0,len(bounding_Boxes)):
-            msgBoxes = FloatList()
-            msgBoxes.elements = bounding_Boxes[p]
-            float_array.lists.append(msgBoxes)
-            #float_array.lists[i] = msgBoxes
-
-
+            for p in range(0,len(bounding_Boxes)):
+                msgBoxes = FloatList()
+                msgBoxes.elements = bounding_Boxes[p]
+                float_array.lists.append(msgBoxes)
+                #float_array.lists[i] = msgBoxes
 
 
-        self.publisher_boundingBoxes.publish(float_array)
-        processed_image = cv2.cvtColor(raw_image, cv2.COLOR_RGB2BGR)
-        # Process image
 
-        processed_image = self.cv_bridge_.cv2_to_compressed_imgmsg(processed_image, "png")
-        self.publisher_.publish(processed_image)
-        self.get_logger().info("Published processed image.")
+            #self.get_logger().info(str(float_array))
+            self.publisher_boundingBoxes.publish(float_array)
+            processed_image = cv2.cvtColor(raw_image, cv2.COLOR_RGB2BGR)
+            # Process image
+
+            processed_image = self.cv_bridge_.cv2_to_compressed_imgmsg(processed_image, "png")
+            self.publisher_.publish(processed_image)
+            self.get_logger().info("Published processed image.")
 
 
 def main(args=None):
