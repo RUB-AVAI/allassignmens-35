@@ -18,8 +18,13 @@ def generate_launch_description():
         package="camera_pkg",
         executable="gui_node"
     )
+    occupancy_map_node = Node(
+        package="camera_pkg",
+        executable="occupancy_map_node"
+    )
 
     ld.add_action(camera_node)
     ld.add_action(image_processing_node)
     ld.add_action(gui_node)
+    ld.add_action(occupancy_map_node)
     return ld
