@@ -17,6 +17,7 @@
   <depend>pyqt5-dev-tools</depend>
   <depend>threading</depend>
   <depend>python3-yolov5.models.common</depend>
+  <depend>matplotlib</depend>
 
   <exec_depend>ros2launch</exec_depend>
 
