@@ -1,3 +1,5 @@
+import matplotlib.colors
+import pandas as pd
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
@@ -11,8 +13,10 @@ from avai_messages.msg import FloatList
 from PyQt5.QtCore import *
 import cv2
 import sys
+import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from cv_bridge import CvBridge
 
 
@@ -31,7 +35,7 @@ class GuiNode(Node):
         self.cv_bridge_ = CvBridge()
 
         self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
-        self.subscriber_Lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_draw_map, 10)
+        self.subscriber_Lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_draw_map,10)
         self.subscriber_ = self.create_subscription(CompressedImage, "processed_image", self.callback_processed_image, 10)
         self.publisher_ = self.create_publisher(Float64, "set_frequency", 10)
 
@@ -60,11 +64,19 @@ class GuiNode(Node):
                 lidar.append(e)
 
             lidar_values.append(lidar)
-        colors = {'0.0':'blue','1.0':'orange','2.0':'yellow'}
-        plt.scatter(lidar_values[0], lidar_values[1], c = list(map(str, lidar_values[2])).map(colors))
-        plt.show()
+        self.get_logger().info(str(lidar_values))
         self.get_logger().info("Lidar Values processed")
 
+        colors = ['blue', 'orange', 'yellow']
+        df = pd.DataFrame(lidar_values)
+        dfAngles = df.iloc[:,0]
+        dfDistances = df.iloc[:, 1]
+        dfClasses = df.iloc[:, 2]
+        # lidar_points = lidar_values[0]
+        # classes = [str(lidar_values[2]) for points in lidar_values[2]]
+        plt.scatter(dfAngles.to_numpy(), dfDistances.to_numpy(), c=dfClasses.to_numpy(),
+                            cmap=matplotlib.colors.ListedColormap(colors))
+        plt.show()
 
     def callback_processed_image(self, msg):
         self.get_logger().info("Received processed image.")
@@ -109,12 +121,6 @@ class MainWindow(QWidget):
         #self.imageLabel = QLabel()
         #self.VBL.addWidget(self.imageLabel)
 
-        self.figure = plt.figure()
-        self.canvas = FigureCanvasQTAgg(self.figure)
-        self.toolbar = NavigationToolbar2QT(self.canvas)
-        self.VBL.addWidget(self.toolbar)
-        self.VBL.addWidget(self.canvas)
-
         self.saveScreenshotBtn = QPushButton("Save single image")
         self.saveScreenshotBtn.clicked.connect(self.save_screenshot)
         self.VBL.addWidget(self.saveScreenshotBtn)
@@ -122,7 +128,6 @@ class MainWindow(QWidget):
         self.toggleRecordingBtn = QPushButton("Start recording")
         self.toggleRecordingBtn.clicked.connect(self.toggle_recording)
         self.VBL.addWidget(self.toggleRecordingBtn)
-
         self.frequencyTxt = QLineEdit()
         self.frequencyTxt.setPlaceholderText("Frequency = 0 Images per Second")
         self.frequencyTxt.setValidator(QDoubleValidator(0.0, 177013.0, 10))
@@ -133,6 +138,8 @@ class MainWindow(QWidget):
 
     def update_image(self, image):
         self.imageLabel.setPixmap(QPixmap.fromImage(image))
+
+
 
     def save_screenshot(self):
         self.node.recordOne = True
@@ -153,11 +160,6 @@ class MainWindow(QWidget):
         self.node.publisher_.publish(msg)
         self.node.get_logger().info("Sent new frequency.")
 
-    def update_plot(self, data):
-        self.figure.clear()
-        ax = self.figure.add_subplot(111)
-        ax.plot(data)
-        self.canvas.draw()
 
 def main(args=None):
     rclpy.init(args=args)
