@@ -30,7 +30,7 @@ class GuiNode(Node):
         self.cv_bridge_ = CvBridge()
 
         self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
-        self.subscriber_Lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_draw_map)
+        self.subscriber_Lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_draw_map,10)
         self.subscriber_ = self.create_subscription(CompressedImage, "processed_image", self.callback_processed_image, 10)
         self.publisher_ = self.create_publisher(Float64, "set_frequency", 10)
 
@@ -59,8 +59,10 @@ class GuiNode(Node):
                 lidar.append(e)
 
             lidar_values.append(lidar)
+        self.get_logger().info(str(lidar_values))
         colors = {'0.0':'blue','1.0':'orange','2.0':'yellow'}
-        plt.scatter(lidar_values[0], lidar_values[1], c = list(map(str, lidar_values[2])).map(colors))
+        #lidar_points = lidar_values[0]
+        plt.scatter(lidar_values[0], lidar_values[1])#, c = list(map(str, lidar_points[2])).map(colors))
         plt.show()
         self.get_logger().info("Lidar Values processed")
 
