@@ -2,6 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64
+from avai_messages.msg import PointArray, ClassedPoint
 import cv2
 from cv_bridge import CvBridge
 import math
@@ -21,10 +22,10 @@ class OccupancyMapNode(Node):
         self.turtle_state = {"x": 125, "y": 125, "angle": math.radians(0)}
 
         # to do: to add correct message type
-        self.publisher_ = self.create_publisher(Float64, "updated_map", 10)
+        self.publisher_ = self.create_publisher(PointArray, "updated_points", 10)
         # to do: add subscriber for turtlebot movement
 
-        """ Debug Tests
+        #Debug Tests
         # [Angle, Distance, ClassID]
         test_positions = [(-90, 30, 0), (60, 44, 1), (0, 21, 2), (45, 67, 2)] #data from sensor fusion
         # (125,95), (147,163.105), (146, 125), (172.376, 172.376)
@@ -41,7 +42,7 @@ class OccupancyMapNode(Node):
             for y in range(MAP_SIZE):
                 if self.map[x][y] != -1:
                     self.get_logger().info(f"{x},{y}, class={self.map[x][y]}")
-        """
+
         self.get_logger().info("Occupancy Map started.")
 
     def lidar_to_xy(self, data: Tuple[float,float,int]):
@@ -61,10 +62,23 @@ class OccupancyMapNode(Node):
         :param positions: A list of tuples, representing the lidar points in the format (angle, distance, classID).
         """
         #positions list[tuple[float, float, int]]
+
+        points = []
         for position in positions:
             xyc = self.lidar_to_xy(position)
+
+            p = ClassedPoint()
+            p.x = xyc["x"]
+            p.y = xyc["y"]
+            p.c = xyc["classID"]
+
+            points.append(p)
             self.map[math.floor(xyc["x"]/2)][math.floor(xyc["y"]/2)] = xyc["classID"]
-        self.publisher_.publish(self.map)
+
+        pointArray = PointArray()
+        pointArray.data = points
+        self.get_logger().info("published")
+        self.publisher_.publish(pointArray)
 
 
 def main(args=None):
