@@ -11,6 +11,7 @@ from avai_messages.msg import FloatList
 from PyQt5.QtCore import *
 import cv2
 import sys
+import matplotlib.pyplot as plt
 from cv_bridge import CvBridge
 
 
@@ -25,17 +26,49 @@ class GuiNode(Node):
         self.recordOne = False
         self.manual_recorded_image_counter = 0
         self.bounding_boxes = []
-
+        self.bounding_box_arrived = 0
         self.cv_bridge_ = CvBridge()
 
         self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
+        self.subscriber_Lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_draw_map)
         self.subscriber_ = self.create_subscription(CompressedImage, "processed_image", self.callback_processed_image, 10)
         self.publisher_ = self.create_publisher(Float64, "set_frequency", 10)
+
+
+    def drawBoundingBoxes(self,boundingBox, imageToDraw):
+
+
+        for box in boundingBox:
+            self.get_logger().info(str(box) + " Hallo")
+            if box[5] == 0:
+                cv2.rectangle(imageToDraw,(box[0]-box[2]/2,box[1]+box[3]/3),(box[0]+box[2]/2,box[1]-box[3]/3), (0,0,255),3)
+            if box[5] == 1:
+                cv2.rectangle(imageToDraw,(box[0]-box[2]/2,box[1]+box[3]/3),(box[0]+box[2]/2,box[1]-box[3]/3), (255,165,0),3)
+            if box[5] == 2:
+                cv2.rectangle(imageToDraw,(box[0]-box[2]/2,box[1]+box[3]/3),(box[0]+box[2]/2,box[1]-box[3]/3), (255,255,0),3)
+
+
+        cv2.imshow("Video", imageToDraw)
+
+    def callback_draw_map(self, msg):
+        self.get_logger().info("Lidar Values received")
+        lidar_values = []
+        for lst in msg.lists:
+            lidar = []
+            for e in lst.elements:
+                lidar.append(e)
+
+            lidar_values.append(lidar)
+        colors = {'0':'blue','1':'orange','2':'yellow'}
+        plt.scatter(lidar_values[0], lidar_values[1], c = ['{:.2f}'.format(x) in lidar_values[2]].map(colors))
+        plt.show()
+        self.get_logger().info("Lidar Values processed")
+
 
     def callback_processed_image(self, msg):
         self.get_logger().info("Received processed image.")
         processed_image = self.cv_bridge_.compressed_imgmsg_to_cv2(msg)
-        cv2.imshow("Video",processed_image)
+        #self.drawBoundingBoxes(processed_image,self.bounding_boxes)
         if self.recording:
             cv2.imwrite("Image%d.png" % self.recorded_image_counter, processed_image)
             self.recorded_image_counter += 1
@@ -44,11 +77,7 @@ class GuiNode(Node):
             cv2.imwrite("ManualImage%d.png" % self.manual_recorded_image_counter, processed_image)
             self.manual_recorded_image_counter += 1
 
-        #q_image = cv2.cvtColor(processed_image, cv2.COLOR_BGR2RGB)
-        #q_image = cv2.flip(q_image, 1)
-        #q_image = QImage(q_image.data, q_image.shape[1], q_image.shape[0], QImage.Format_RGB888)
-        #q_image = q_image.scaled(640, 480, Qt.KeepAspectRatio)
-        #self.hmi.update_image(q_image)
+
 
     def callback_process_boundingBox(self,msg):
         self.get_logger().info("Bounding Boxes arrived")
@@ -57,11 +86,15 @@ class GuiNode(Node):
             box = []
             for e in lst.elements:
                 box.append(e)
-            self.get_logger().info(str(box))
+
             processed_bounding_box.append(box)
         self.bounding_boxes = processed_bounding_box
 
+        self.get_logger().info(str(self.bounding_boxes))
         self.get_logger().info("Bounding Boxes processed")
+
+
+
 
 
 class MainWindow(QWidget):
