@@ -12,6 +12,7 @@ from PyQt5.QtCore import *
 import cv2
 import sys
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from cv_bridge import CvBridge
 
 
@@ -30,7 +31,7 @@ class GuiNode(Node):
         self.cv_bridge_ = CvBridge()
 
         self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
-        self.subscriber_Lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_draw_map)
+        self.subscriber_Lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_draw_map, 10)
         self.subscriber_ = self.create_subscription(CompressedImage, "processed_image", self.callback_processed_image, 10)
         self.publisher_ = self.create_publisher(Float64, "set_frequency", 10)
 
@@ -108,6 +109,12 @@ class MainWindow(QWidget):
         #self.imageLabel = QLabel()
         #self.VBL.addWidget(self.imageLabel)
 
+        self.figure = plt.figure()
+        self.canvas = FigureCanvasQTAgg(self.figure)
+        self.toolbar = NavigationToolbar2QT(self.canvas)
+        self.VBL.addWidget(self.toolbar)
+        self.VBL.addWidget(self.canvas)
+
         self.saveScreenshotBtn = QPushButton("Save single image")
         self.saveScreenshotBtn.clicked.connect(self.save_screenshot)
         self.VBL.addWidget(self.saveScreenshotBtn)
@@ -146,6 +153,11 @@ class MainWindow(QWidget):
         self.node.publisher_.publish(msg)
         self.node.get_logger().info("Sent new frequency.")
 
+    def update_plot(self, data):
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        ax.plot(data)
+        self.canvas.draw()
 
 def main(args=None):
     rclpy.init(args=args)
