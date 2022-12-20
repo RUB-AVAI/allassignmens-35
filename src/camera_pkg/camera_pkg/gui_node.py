@@ -67,7 +67,7 @@ class GuiNode(Node):
         self.get_logger().info(str(lidar_values))
         self.get_logger().info("Lidar Values processed")
 
-        colors = ['blue', 'orange', 'yellow']
+        colors = ['blue', 'yellow','orange']
         df = pd.DataFrame(lidar_values)
         dfAngles = df.iloc[:,0]
         dfDistances = df.iloc[:, 1]

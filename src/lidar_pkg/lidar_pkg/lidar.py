@@ -85,13 +85,12 @@ class LidarFusion(Node):
         self.get_logger().info(str(self.lidar_scan))
         self.get_logger().info(str(fused))
 
-        lid_data=FloatList()
 
+        msg_lid = FloatArray()
         for ele in fused:
-            lid_data.elements=ele
-        msg_lid=FloatArray()
-        for e in lid_data:
-            msg_lid.lists.append(e)
+            lid_data = FloatList()
+            lid_data.elements = ele
+            msg_lid.lists.append(lid_data)
 
         self.publisher.publish(msg_lid)
               #  if possible_angle-1.0 <= scan.ang <= possible_angle+1.0:
