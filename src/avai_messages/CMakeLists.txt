@@ -37,6 +37,8 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
     "msg/FloatArray.msg"
     "msg/FloatList.msg"
+    "msg/ClassedPoint.msg"
+    "msg/PointArray.msg"
 )
 
 ament_package()
