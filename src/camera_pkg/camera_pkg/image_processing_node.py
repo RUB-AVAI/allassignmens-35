@@ -32,6 +32,7 @@ class ImageProcessingNode(Node):
         self.publisher_boundingBoxes = self.create_publisher(FloatArray,"bounding_box",10)
         self.subscriber_ = self.create_subscription(Image, "raw_image", self.callback_raw_image, 10)
         self.publisher_ = self.create_publisher(CompressedImage, "processed_image", 10)
+        self.publisher_lidar = self.create_publisher(FloatArray, "lidar_values", 10)
         self.get_logger().info("Image Processor started.")
 
     def callback_raw_image(self, msg):
@@ -60,6 +61,20 @@ class ImageProcessingNode(Node):
                 float_array.lists.append(msgBoxes)
                 #float_array.lists[i] = msgBoxes
 
+
+            ##TESTING LIDAR
+            msgLidar = FloatList()
+            msgLidar.elements = [22.0, 27.0,1.0]
+            msgLidar2 = FloatList()
+            msgLidar2.elements = [10.0, 54.0, 2.0]
+            msgLidar3 = FloatList()
+            msgLidar3.elements = [12.0, 24.0, 0.0]
+            float_lidar = FloatArray()
+            float_lidar.lists.append(msgLidar)
+            float_lidar.lists.append(msgLidar2)
+            float_lidar.lists.append(msgLidar3)
+            self.publisher_lidar.publish(float_lidar)
+            ##ENDTESTING
 
 
             #self.get_logger().info(str(float_array))
