@@ -8,8 +8,7 @@ from std_msgs.msg import Float64
 from threading import Thread
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from avai_messages.msg import FloatArray
-from avai_messages.msg import FloatList
+from avai_messages.msg import FloatArray, FloatList, PointArray
 from PyQt5.QtCore import *
 import cv2
 import sys
@@ -34,7 +33,7 @@ class GuiNode(Node):
         self.cv_bridge_ = CvBridge()
 
         self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
-        self.subscriber_Lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_draw_map,10)
+        self.subscriber_Lidar = self.create_subscription(PointArray, "updated_points", self.callback_draw_map, 10)
         self.subscriber_ = self.create_subscription(CompressedImage, "processed_image", self.callback_processed_image, 10)
         self.publisher_ = self.create_publisher(Float64, "set_frequency", 10)
 
@@ -51,7 +50,7 @@ class GuiNode(Node):
         cv2.imshow("Video", imageToDraw)
 
     def callback_draw_map(self, msg):
-        self.get_logger().info("Lidar Values received")
+        """"self.get_logger().info("Lidar Values received")
         lidar_values = []
         for lst in msg.lists:
             lidar = []
@@ -61,7 +60,11 @@ class GuiNode(Node):
             lidar_values.append(lidar)
         self.get_logger().info(str(lidar_values))
         self.get_logger().info("Lidar Values processed")
-
+        """
+        lidar_values = []
+        for point in msg.data:
+            lidar_values.append([point.x, point.y, point.c])
+        self.get_logger().info("Processing draw map")
         self.hmi.update_plot(lidar_values)
 
     def callback_processed_image(self, msg):
@@ -148,14 +151,17 @@ class MainWindow(QWidget):
         self.figure.clear()
         ax = self.figure.add_subplot(111)
 
-        colors = ['blue', 'orange', 'yellow']
+        colors = ['blue', 'orange', 'yellow', "black"]
         df = pd.DataFrame(data)
-        dfAngles = df.iloc[:, 0]
-        dfDistances = df.iloc[:, 1]
+        dfX = df.iloc[:, 0]
+        dfY = df.iloc[:, 1]
         dfClasses = df.iloc[:, 2]
 
-        ax.scatter(dfAngles.to_numpy(), dfDistances.to_numpy(), c=dfClasses.to_numpy(),
+        ax.scatter(dfX.to_numpy(), dfY.to_numpy(), c=dfClasses.to_numpy(),
                             cmap=matplotlib.colors.ListedColormap(colors))
+        ax.grid()
+        ax.set_xlim([0, 251])
+        ax.set_ylim([0,251])
         self.canvas.draw()
 
 

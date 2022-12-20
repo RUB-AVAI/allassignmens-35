@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import math
+
 import rclpy
 from rclpy.node import Node
 import pandas
@@ -11,6 +13,7 @@ from std_msgs.msg import Float64MultiArray
 import numpy as np
 from avai_messages.msg import FloatArray
 from avai_messages.msg import FloatList
+from math import radians
 
 from cv_bridge import CvBridge
 
@@ -64,15 +67,19 @@ class ImageProcessingNode(Node):
 
             ##TESTING LIDAR
             msgLidar = FloatList()
-            msgLidar.elements = [22.0, 27.0,1.0]
+            msgLidar.elements = [math.radians(22.0), 27.0,1.0]
             msgLidar2 = FloatList()
-            msgLidar2.elements = [10.0, 54.0, 2.0]
+            msgLidar2.elements = [math.radians(10.0), 54.0, 2.0]
             msgLidar3 = FloatList()
-            msgLidar3.elements = [12.0, 24.0, 0.0]
+            msgLidar3.elements = [math.radians(12.0), 24.0, 0.0]
+            msgLidar4 = FloatList()
+            msgLidar4.elements = [math.radians(12.0), 40.0, 0.0]
+
             float_lidar = FloatArray()
             float_lidar.lists.append(msgLidar)
             float_lidar.lists.append(msgLidar2)
             float_lidar.lists.append(msgLidar3)
+            float_lidar.lists.append(msgLidar4)
             self.publisher_lidar.publish(float_lidar)
             ##ENDTESTING
 
