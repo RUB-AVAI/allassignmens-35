@@ -1,3 +1,5 @@
+import matplotlib.colors
+import pandas as pd
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
@@ -11,7 +13,10 @@ from avai_messages.msg import FloatList
 from PyQt5.QtCore import *
 import cv2
 import sys
+import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from cv_bridge import CvBridge
 
 
@@ -60,12 +65,18 @@ class GuiNode(Node):
 
             lidar_values.append(lidar)
         self.get_logger().info(str(lidar_values))
-        colors = {'0.0':'blue','1.0':'orange','2.0':'yellow'}
-        #lidar_points = lidar_values[0]
-        plt.scatter(lidar_values[0], lidar_values[1])#, c = list(map(str, lidar_points[2])).map(colors))
-        plt.show()
         self.get_logger().info("Lidar Values processed")
 
+        colors = ['blue', 'orange', 'yellow']
+        df = pd.DataFrame(lidar_values)
+        dfAngles = df.iloc[:,0]
+        dfDistances = df.iloc[:, 1]
+        dfClasses = df.iloc[:, 2]
+        # lidar_points = lidar_values[0]
+        # classes = [str(lidar_values[2]) for points in lidar_values[2]]
+        plt.scatter(dfAngles.to_numpy(), dfDistances.to_numpy(), c=dfClasses.to_numpy(),
+                            cmap=matplotlib.colors.ListedColormap(colors))
+        plt.show()
 
     def callback_processed_image(self, msg):
         self.get_logger().info("Received processed image.")
@@ -117,7 +128,6 @@ class MainWindow(QWidget):
         self.toggleRecordingBtn = QPushButton("Start recording")
         self.toggleRecordingBtn.clicked.connect(self.toggle_recording)
         self.VBL.addWidget(self.toggleRecordingBtn)
-
         self.frequencyTxt = QLineEdit()
         self.frequencyTxt.setPlaceholderText("Frequency = 0 Images per Second")
         self.frequencyTxt.setValidator(QDoubleValidator(0.0, 177013.0, 10))
@@ -128,6 +138,8 @@ class MainWindow(QWidget):
 
     def update_image(self, image):
         self.imageLabel.setPixmap(QPixmap.fromImage(image))
+
+
 
     def save_screenshot(self):
         self.node.recordOne = True
