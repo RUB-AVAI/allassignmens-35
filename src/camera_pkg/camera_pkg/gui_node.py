@@ -59,7 +59,9 @@ class GuiNode(Node):
                 lidar.append(e)
 
             lidar_values.append(lidar)
-        plt.scatter(lidar_values[0], lidar_values[1])
+        colors = {'0':'blue','1':'orange','2':'yellow'}
+        plt.scatter(lidar_values[0], lidar_values[1], c = ['{:.2f}'.format(x) in lidar_values[2]].map(colors))
+        plt.show()
         self.get_logger().info("Lidar Values processed")
 
 
