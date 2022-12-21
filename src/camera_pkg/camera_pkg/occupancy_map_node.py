@@ -43,8 +43,8 @@ class OccupancyMapNode(Node):
         :return: Dictionary in the format (x-coordinate, y-coordinate, classID). All coordiantes are real world
         coordinates in cm.
         """
-        x = math.cos(-data[0] + -self.turtle_state["angle"])*data[1] + self.turtle_state["x"]
-        y = math.sin(-data[0] + -self.turtle_state["angle"])*data[1] + self.turtle_state["y"]
+        x = math.cos(math.radians(-data[0] + -self.turtle_state["angle"]))*data[1]*100 + self.turtle_state["x"]
+        y = math.sin(math.radians(data[0] + -self.turtle_state["angle"]))*data[1]*100 + self.turtle_state["y"]
         return {"x": x, "y": y, "classID": data[2]}
 
     def update_map(self, positions: List[Tuple[float, float, int]]):

@@ -47,10 +47,11 @@ class GuiNode(Node):
             if box[5] == 2:
                 cv2.rectangle(imageToDraw,(box[0]-box[2]/2,box[1]+box[3]/3),(box[0]+box[2]/2,box[1]-box[3]/3), (255,255,0),3)
 
-        cv2.imshow("Video", imageToDraw)
+       # cv2.imshow("Video", imageToDraw)
 
     def callback_draw_map(self, msg):
-        """"self.get_logger().info("Lidar Values received")
+        """"
+        self.get_logger().info("Lidar Values received")
         lidar_values = []
         for lst in msg.lists:
             lidar = []
@@ -64,12 +65,13 @@ class GuiNode(Node):
         lidar_values = []
         for point in msg.data:
             lidar_values.append([point.x, point.y, point.c])
-        self.get_logger().info("Processing draw map")
+        self.get_logger().info(str(lidar_values))
         self.hmi.update_plot(lidar_values)
 
     def callback_processed_image(self, msg):
         self.get_logger().info("Received processed image.")
         processed_image = self.cv_bridge_.compressed_imgmsg_to_cv2(msg)
+        cv2.imshow("Video",processed_image)
         #self.drawBoundingBoxes(processed_image,self.bounding_boxes)
         if self.recording:
             cv2.imwrite("Image%d.png" % self.recorded_image_counter, processed_image)
@@ -148,21 +150,22 @@ class MainWindow(QWidget):
         self.node.get_logger().info("Sent new frequency.")
 
     def update_plot(self, data):
-        self.figure.clear()
-        ax = self.figure.add_subplot(111)
+        if len(data) != 0 :
+            self.figure.clear()
+            ax = self.figure.add_subplot(111)
 
-        colors = ['blue', 'orange', 'yellow', "black"]
-        df = pd.DataFrame(data)
-        dfX = df.iloc[:, 0]
-        dfY = df.iloc[:, 1]
-        dfClasses = df.iloc[:, 2]
+            colors = ['blue', 'orange', 'yellow', 'black']
+            df = pd.DataFrame(data)
+            dfX = df.iloc[:, 0]
+            dfY = df.iloc[:, 1]
+            dfClasses = df.iloc[:, 2]
 
-        ax.scatter(dfX.to_numpy(), dfY.to_numpy(), c=dfClasses.to_numpy(),
-                            cmap=matplotlib.colors.ListedColormap(colors))
-        ax.grid()
-        ax.set_xlim([0, 251])
-        ax.set_ylim([0,251])
-        self.canvas.draw()
+            ax.scatter(dfX.to_numpy(), dfY.to_numpy(), c=dfClasses.to_numpy(),
+                                cmap=matplotlib.colors.ListedColormap(colors))
+            ax.grid()
+            ax.set_xlim([0, 251])
+            ax.set_ylim([0,251])
+            self.canvas.draw()
 
 
 def main(args=None):

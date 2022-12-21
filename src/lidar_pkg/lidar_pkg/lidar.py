@@ -9,7 +9,7 @@ from rclpy.qos import qos_profile_sensor_data
 
 def lin_map(x):
     #return 1/(212 - 148) * (x-148)
-    return 1-(1/60*x)
+    return 1-(1/62*x)
 
 
 def filter_scan(scan: LaserScan):
@@ -21,20 +21,20 @@ def filter_scan(scan: LaserScan):
 
 
 def cluster(scan: LaserScan):
-    fov = scan.ranges[148:208]
+    fov = scan.ranges[143:205]
 
     index = -1
     error = 0.05
     last = 0
     clusters = []
-    results = []
+
     for angle, distance in enumerate(fov):
         if abs(distance - last) > (distance * error) and distance != 0:
             clusters.append((angle, angle, distance))
             last = distance
             index += 1
-        elif distance != 0 and abs(distance - last) < (distance * error):
-            start, end,dist = clusters[index]
+        elif distance != 0 and abs(distance - last) <= (distance * error):
+            start, end, dist = clusters[index]
             clusters[index] = (start, angle, dist)
             last = distance
     return clusters
@@ -51,7 +51,7 @@ class LidarFusion(Node):
 
         self.create_subscription(LaserScan, "scan", self.lidar_callback, qos_profile_sensor_data)
         self.create_subscription(FloatArray, "bounding_box", self.bounding_callback, 10)
-        self.publisher= self.create_publisher(FloatArray, "lidar_values",10)
+        self.publisher = self.create_publisher(FloatArray, "lidar_values",10)
 
     def lidar_callback(self, msg):
 
@@ -78,7 +78,7 @@ class LidarFusion(Node):
 
 
             for b in processed_bounding_box:
-                if abs(possible_box - b[0]) < 0.02:
+                if abs(possible_box - b[0]) < 0.03:
                     if((angle_s+angle_e)/2, dist, b[5]) not in fused:
                         fused.append(((angle_s+angle_e)/2, dist, b[5]))
             #for scan in self.lidar_scan.ranges:
