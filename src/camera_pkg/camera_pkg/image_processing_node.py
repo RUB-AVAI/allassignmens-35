@@ -65,23 +65,7 @@ class ImageProcessingNode(Node):
                 #float_array.lists[i] = msgBoxes
 
 
-            ##TESTING LIDAR
-            msgLidar = FloatList()
-            msgLidar.elements = [math.radians(22.0), 27.0,1.0]
-            msgLidar2 = FloatList()
-            msgLidar2.elements = [math.radians(10.0), 54.0, 2.0]
-            msgLidar3 = FloatList()
-            msgLidar3.elements = [math.radians(12.0), 24.0, 0.0]
-            msgLidar4 = FloatList()
-            msgLidar4.elements = [math.radians(12.0), 40.0, 0.0]
 
-            float_lidar = FloatArray()
-            float_lidar.lists.append(msgLidar)
-            float_lidar.lists.append(msgLidar2)
-            float_lidar.lists.append(msgLidar3)
-            float_lidar.lists.append(msgLidar4)
-            self.publisher_lidar.publish(float_lidar)
-            ##ENDTESTING
 
 
             #self.get_logger().info(str(float_array))
