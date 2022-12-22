@@ -44,7 +44,7 @@ class OccupancyMapNode(Node):
         coordinates in cm.
         """
         x = math.cos(math.radians(-data[0] + -self.turtle_state["angle"]))*data[1]*100 + self.turtle_state["x"]
-        y = math.sin(math.radians(data[0] + -self.turtle_state["angle"]))*data[1]*100 + self.turtle_state["y"]
+        y = math.sin(math.radians(-data[0] + -self.turtle_state["angle"]))*data[1]*100 + self.turtle_state["y"]
         return {"x": x, "y": y, "classID": data[2]}
 
     def update_map(self, positions: List[Tuple[float, float, int]]):
