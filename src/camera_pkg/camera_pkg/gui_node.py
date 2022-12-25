@@ -201,8 +201,8 @@ class MainWindow(QWidget):
 
             #colors = ['blue', 'orange', 'yellow', 'black']
             df = pd.DataFrame(data)
-            dfX = df.iloc[:, 0]
-            dfY = df.iloc[:, 1]
+            dfX = df.iloc[:, 1]
+            dfY = df.iloc[:, 0]
             dfClasses = df.iloc[:, 2]
             colors = []
             for classes in dfClasses:
