@@ -16,6 +16,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from cv_bridge import CvBridge
+import message_filters
 
 
 class GuiNode(Node):
@@ -32,22 +33,65 @@ class GuiNode(Node):
         self.bounding_box_arrived = 0
         self.cv_bridge_ = CvBridge()
 
-        self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
+        #Synchronized Messages
+        self.image_sub = message_filters.Subscriber(self,CompressedImage,"processed_image")
+        self.boundingbox_sub = message_filters.Subscriber(self,FloatArray,"bounding_box")
+        ts = message_filters.TimeSynchronizer([self.boundingbox_sub , self.image_sub], 10)
+        ts.registerCallback(self.drawBoundingBoxes)
+
+        #self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
         self.subscriber_Lidar = self.create_subscription(PointArray, "updated_points", self.callback_draw_map, 10)
         self.subscriber_ = self.create_subscription(CompressedImage, "processed_image", self.callback_processed_image, 10)
         self.publisher_ = self.create_publisher(Float64, "set_frequency", 10)
 
     def drawBoundingBoxes(self,boundingBox, imageToDraw):
-        for box in boundingBox:
-            self.get_logger().info(str(box) + " Hallo")
-            if box[5] == 0:
-                cv2.rectangle(imageToDraw,(box[0]-box[2]/2,box[1]+box[3]/3),(box[0]+box[2]/2,box[1]-box[3]/3), (0,0,255),3)
-            if box[5] == 1:
-                cv2.rectangle(imageToDraw,(box[0]-box[2]/2,box[1]+box[3]/3),(box[0]+box[2]/2,box[1]-box[3]/3), (255,165,0),3)
-            if box[5] == 2:
-                cv2.rectangle(imageToDraw,(box[0]-box[2]/2,box[1]+box[3]/3),(box[0]+box[2]/2,box[1]-box[3]/3), (255,255,0),3)
 
-       # cv2.imshow("Video", imageToDraw)
+        self.get_logger().info("Bounding Boxes and images arrived")
+        processed_bounding_box = []
+        for lst in boundingBox.lists:
+            box = []
+            for e in lst.elements:
+                box.append(e)
+
+            processed_bounding_box.append(box)
+        self.bounding_boxes = processed_bounding_box
+        self.get_logger().info(str(self.bounding_boxes))
+        processed_image = self.cv_bridge_.compressed_imgmsg_to_cv2(imageToDraw)
+        self.get_logger().info("Bounding Boxes and Images processed")
+
+        for box in self.bounding_boxes:
+            h, w, c = processed_image.shape
+            if int(box[5]) == 0:
+                text = 'Blue ' + str(round(box[4],2));
+                font =  cv2.FONT_HERSHEY_SIMPLEX
+                fontScale = 0.7
+                color = (255,0,0)
+                thickness = 1
+                cv2.putText(processed_image,text,(int(w*(box[0]-(box[2]/2))),int(h*(box[1]-(box[3]/2)))-10),font,fontScale,color,thickness,cv2.LINE_AA)
+                cv2.rectangle(processed_image,(int(w*(box[0]-(box[2]/2))),int(h*(box[1]-(box[3]/2)))),(int(w*(box[0]+(box[2]/2))),int(h*(box[1]+(box[3]/2)))), (255,0,0),3)
+            if int(box[5]) == 1:
+                text = 'Orange ' + str(round(box[4],2));
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                fontScale = 0.7
+                color = (0,165,255)
+                thickness = 1
+                cv2.putText(processed_image, text,
+                            (int(w * (box[0] - (box[2] / 2))), int(h * (box[1] - (box[3] / 2))) - 10), font, fontScale,
+                            color, thickness, cv2.LINE_AA)
+                cv2.rectangle(processed_image,(int(w*(box[0]-(box[2]/2))),int(h*(box[1]-(box[3]/2)))),(int(w*(box[0]+(box[2]/2))),int(h*(box[1]+(box[3]/2)))), (0,165,255),3)
+            if int(box[5]) == 2:
+                text = 'Yellow ' + str(round(box[4],2));
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                fontScale = 0.7
+                color = (0,255,255)
+                thickness = 1
+                cv2.putText(processed_image, text,
+                            (int(w * (box[0] - (box[2] / 2))), int(h * (box[1] - (box[3] / 2))) - 10), font, fontScale,
+                            color, thickness, cv2.LINE_AA)
+                cv2.rectangle(processed_image,(int(w*(box[0]-(box[2]/2))),int(h*(box[1]-(box[3]/2)))),(int(w*(box[0]+(box[2]/2))),int(h*(box[1]+(box[3]/2)))), (0,255,255),3)
+
+
+        cv2.imshow("Video", processed_image)
 
     def callback_draw_map(self, msg):
         """"
@@ -69,9 +113,8 @@ class GuiNode(Node):
         self.hmi.update_plot(lidar_values)
 
     def callback_processed_image(self, msg):
-        self.get_logger().info("Received processed image.")
         processed_image = self.cv_bridge_.compressed_imgmsg_to_cv2(msg)
-        cv2.imshow("Video",processed_image)
+        #cv2.imshow("Video",processed_image)
         #self.drawBoundingBoxes(processed_image,self.bounding_boxes)
         if self.recording:
             cv2.imwrite("Image%d.png" % self.recorded_image_counter, processed_image)
@@ -82,6 +125,7 @@ class GuiNode(Node):
             self.manual_recorded_image_counter += 1
 
     def callback_process_boundingBox(self,msg):
+        '''
         self.get_logger().info("Bounding Boxes arrived")
         processed_bounding_box = []
         for lst in msg.lists:
@@ -94,7 +138,8 @@ class GuiNode(Node):
 
         self.get_logger().info(str(self.bounding_boxes))
         self.get_logger().info("Bounding Boxes processed")
-
+        '''
+        pass
 
 class MainWindow(QWidget):
     node: GuiNode = None

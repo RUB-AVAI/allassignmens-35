@@ -44,7 +44,7 @@ class ImageProcessingNode(Node):
 
             raw_image = cv2.cvtColor(raw_image, cv2.COLOR_RGB2BGR)
             detect = self.interpreter(raw_image)
-            detect.render()
+            #detect.render()
 
             boxes = detect.pandas().xywhn[0].iloc[:,0:6].to_numpy().astype(np.float)
 
