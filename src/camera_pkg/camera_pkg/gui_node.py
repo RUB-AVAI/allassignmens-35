@@ -199,14 +199,23 @@ class MainWindow(QWidget):
             self.figure.clear()
             ax = self.figure.add_subplot(111)
 
-            colors = ['blue', 'orange', 'yellow', 'black']
+            #colors = ['blue', 'orange', 'yellow', 'black']
             df = pd.DataFrame(data)
             dfX = df.iloc[:, 0]
             dfY = df.iloc[:, 1]
             dfClasses = df.iloc[:, 2]
+            colors = []
+            for classes in dfClasses:
+                if classes == 0:
+                    colors.append("blue")
+                if classes == 1:
+                    colors.append("orange")
+                if classes == 2:
+                    colors.append("yellow")
+                if classes == 3:
+                    colors.append("black")
 
-            ax.scatter(dfX.to_numpy(), dfY.to_numpy(), c=dfClasses.to_numpy(),
-                                cmap=matplotlib.colors.ListedColormap(colors))
+            ax.scatter(dfX.to_numpy(), dfY.to_numpy(), c=colors)
             ax.grid()
             ax.set_xlim([0, 251])
             ax.set_ylim([0,251])
