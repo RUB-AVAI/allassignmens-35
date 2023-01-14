@@ -53,30 +53,38 @@ class OccupancyMapNode(Node):
         Places the classes of all lidar point in a given list into the map.
         :param positions: A list of tuples, representing the lidar points in the format (angle, distance, classID).
         """
-        #positions list[tuple[float, float, int]]
-
-        points = []
         for position in positions:
             xyc = self.lidar_to_xy(position)
 
-            p = ClassedPoint()
-            p.x = xyc["x"]
-            p.y = xyc["y"]
-            p.c = int(xyc["classID"])
-
-            points.append(p)
             self.map[math.floor(xyc["x"])][math.floor(xyc["y"])] = xyc["classID"]
 
+        self.publish_map()
+
+    def publish_map(self):
+        points = []
+
+        # add position of turtlebot as point
         turtle_point = ClassedPoint()
         turtle_point.x = self.turtle_state["x"]
         turtle_point.y = self.turtle_state["y"]
         turtle_point.c = 3
         points.append(turtle_point)
 
-        pointArray = PointArray()
-        pointArray.data = points
+        # add points of map
+        for x in range(len(self.map)):
+            for y in range(len(self.map[0])):
+                if self.map[x][y] != -1:
+                    p = ClassedPoint()
+                    p.x = x
+                    p.y = y
+                    p.c = self.map[x][y]
 
-        self.publisher_.publish(pointArray)
+                    points.append(p)
+
+        point_array = PointArray()
+        point_array.data = points
+
+        self.publisher_.publish(point_array)
         self.get_logger().info("Published points list")
 
 
