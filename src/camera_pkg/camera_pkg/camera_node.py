@@ -46,7 +46,9 @@ class CameraNode(Node):
     def try_and_publish_image(self):
         ret, frame = self.cap_.read()  # True, self.cap_
         if ret:
-            self.publisher_.publish(self.cv_bridge_.cv2_to_imgmsg(frame))
+            imagemsg = self.cv_bridge_.cv2_to_imgmsg(frame)
+            imagemsg.header.stamp = self.get_clock().now().to_msg()
+            self.publisher_.publish(imagemsg)
             self.get_logger().info("Published raw image.")
         else:
             self.get_logger().info("Could not get raw image.")
