@@ -18,8 +18,8 @@ from math import radians
 from cv_bridge import CvBridge
 
 # launch ros2 from /allassignmens/src/
-#MODEL_PATH = "./camera_pkg/camera_pkg/ml_models/best-int8_edgetpu.tflite"  # "/home/ubuntu/allassingmens-35/src/camera_pkg/camera_pkg/best-int8_edgetpu.tflite"
-MODEL_PATH = "./camera_pkg/camera_pkg/ml_models/best.pt"  # "/home/ubuntu/allassignmens-35/src/camera_pkg/camera_pkg/best.pt"
+MODEL_PATH = "./camera_pkg/camera_pkg/ml_models/best-int8_edgetpu.tflite"  # "/home/ubuntu/allassingmens-35/src/camera_pkg/camera_pkg/best-int8_edgetpu.tflite"
+#MODEL_PATH = "./camera_pkg/camera_pkg/ml_models/best.pt"  # "/home/ubuntu/allassignmens-35/src/camera_pkg/camera_pkg/best.pt"
 LABEL_PATH = "./camera_pkg/camera_pkg/ml_models/labels.yaml"  # "/home/ubuntu/allassingmens-35/src/camera_pkg/camera_pkg/labels.yaml"
 
 
