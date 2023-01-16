@@ -65,6 +65,7 @@ class ImageProcessingNode(Node):
                 #float_array.lists[i] = msgBoxes
 
             float_array.header.stamp = msg.header.stamp
+
             self.get_logger().info(str(msg.header.stamp))
             self.get_logger().info(str(float_array.header.stamp))
 
@@ -74,6 +75,7 @@ class ImageProcessingNode(Node):
             # Process image
 
             processed_image = self.cv_bridge_.cv2_to_compressed_imgmsg(processed_image, "png")
+            processed_image.header.stamp = msg.header.stamp
             self.publisher_.publish(processed_image)
             self.get_logger().info("Published processed image.")
 

@@ -37,6 +37,7 @@ class GuiNode(Node):
         self.image_sub = message_filters.Subscriber(self,CompressedImage,"processed_image")
         self.boundingbox_sub = message_filters.Subscriber(self,FloatArray,"bounding_box")
         ts = message_filters.TimeSynchronizer([self.boundingbox_sub , self.image_sub], 10)
+
         ts.registerCallback(self.drawBoundingBoxes)
 
         #self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
