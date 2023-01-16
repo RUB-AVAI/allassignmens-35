@@ -64,9 +64,7 @@ class ImageProcessingNode(Node):
                 float_array.lists.append(msgBoxes)
                 #float_array.lists[i] = msgBoxes
 
-
-
-
+            float_array.header.time = msg.header.time
 
             #self.get_logger().info(str(float_array))
             self.publisher_boundingBoxes.publish(float_array)

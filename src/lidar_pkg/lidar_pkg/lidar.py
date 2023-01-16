@@ -4,6 +4,7 @@ from rclpy.node import Node
 from avai_messages.msg import FloatArray
 from avai_messages.msg import FloatList
 from rclpy.qos import qos_profile_sensor_data
+import message_filters
 
 
 
@@ -24,12 +25,12 @@ def cluster(scan: LaserScan):
     fov = scan.ranges[143:205]
 
     index = -1
-    error = 0.05
+    error = 0.1
     last = 0
     clusters = []
 
     for angle, distance in enumerate(fov):
-        if abs(distance - last) > (distance * error) and distance != 0:
+        if abs(distance - last) > (0.15) and distance != 0:
             clusters.append((angle, angle, distance))
             last = distance
             index += 1
@@ -49,10 +50,15 @@ class LidarFusion(Node):
         self.lidar_scan = None
         self.detected_cones = []
 
-        self.create_subscription(LaserScan, "scan", self.lidar_callback, qos_profile_sensor_data)
-        self.create_subscription(FloatArray, "bounding_box", self.bounding_callback, 10)
+        self.lidar_sub=message_filters.Subscriber(self,LaserScan,"scan")
+        self.image_sub=message_filters.Subscriber(self,FloatArray,"bounding_box")
+        ts = message_filters.TimeSynchronizer([self.lidar_sub,self.image_sub],10)
+        ts.registerCallback(self.bounding_callback)
+        #self.create_subscription(LaserScan, "scan", self.lidar_callback, qos_profile_sensor_data)
+        #self.create_subscription(FloatArray, "bounding_box", self.bounding_callback, 10)
         self.publisher = self.create_publisher(FloatArray, "lidar_values",10)
 
+    """"
     def lidar_callback(self, msg):
 
         self.lidar_scan = msg
@@ -62,8 +68,15 @@ class LidarFusion(Node):
         self.lidar_scan = cluster(self.lidar_scan)
 
        # self.get_logger().info(f'angle {str(msg.ranges.index(range))} ranges   {str(range)}')
+    """
+    def bounding_callback(self,lidar,msg):
+        self.lidar_scan = lidar
 
-    def bounding_callback(self,msg):
+        #self.get_logger().info(str(self.lidar_scan.ranges[148:212]))
+        filter_scan(self.lidar_scan)
+        self.lidar_scan = cluster(self.lidar_scan)
+
+
         processed_bounding_box = []
         for lst in msg.lists:
             box = []
@@ -84,7 +97,6 @@ class LidarFusion(Node):
             #for scan in self.lidar_scan.ranges:
         self.get_logger().info(str(self.lidar_scan))
         self.get_logger().info(str(fused))
-
 
         msg_lid = FloatArray()
         for ele in fused:
