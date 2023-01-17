@@ -10,9 +10,9 @@ import message_filters
 
 def lin_map(x):
     #return 1/(212 - 148) * (x-148)
-    return 1-(1/62*x)
+    return 1-(1/64*x)
 
-
+# 48,5 25,8 6,3
 def filter_scan(scan: LaserScan):
     for r in range(len(scan.ranges)):
         #if r >= 1 and scan.ranges[r] != 0 and scan.ranges[r-1] == 0 and scan.ranges[r+1] == 0:
@@ -22,7 +22,7 @@ def filter_scan(scan: LaserScan):
 
 
 def cluster(scan: LaserScan):
-    fov = scan.ranges[143:205]
+    fov = scan.ranges[145:205]
 
     index = -1
     error = 0.1
@@ -50,13 +50,14 @@ class LidarFusion(Node):
         self.lidar_scan = None
         self.detected_cones = []
 
-        self.lidar_sub=message_filters.Subscriber(self,LaserScan,"scan")
+        self.lidar_sub=message_filters.Subscriber(self,LaserScan,"scan", qos_profile=qos_profile_sensor_data)
         self.image_sub=message_filters.Subscriber(self,FloatArray,"bounding_box")
-        ts = message_filters.TimeSynchronizer([self.lidar_sub,self.image_sub],10)
+        ts = message_filters.ApproximateTimeSynchronizer([self.lidar_sub,self.image_sub],100,20,False)
         ts.registerCallback(self.bounding_callback)
         #self.create_subscription(LaserScan, "scan", self.lidar_callback, qos_profile_sensor_data)
         #self.create_subscription(FloatArray, "bounding_box", self.bounding_callback, 10)
         self.publisher = self.create_publisher(FloatArray, "lidar_values",10)
+        #self.create_timer(10,self.bounding_callback)
 
     """"
     def lidar_callback(self, msg):
@@ -72,7 +73,7 @@ class LidarFusion(Node):
     def bounding_callback(self,lidar,msg):
         self.lidar_scan = lidar
 
-        #self.get_logger().info(str(self.lidar_scan.ranges[148:212]))
+        self.get_logger().info(str(len(self.lidar_scan.ranges)))
         filter_scan(self.lidar_scan)
         self.lidar_scan = cluster(self.lidar_scan)
 
@@ -91,7 +92,7 @@ class LidarFusion(Node):
 
 
             for b in processed_bounding_box:
-                if abs(possible_box - b[0]) < 0.03:
+                if abs(possible_box - b[0]) < 0.04:
                     if((angle_s+angle_e)/2, dist, b[5]) not in fused:
                         fused.append(((angle_s+angle_e)/2, dist, b[5]))
             #for scan in self.lidar_scan.ranges:
