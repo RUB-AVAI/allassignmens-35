@@ -2,11 +2,16 @@
 import rclpy
 from rclpy.node import Node
 from avai_messages.msg import PointArray, ClassedPoint, FloatArray, FloatList
+from nav_msgs.msg import Odometry
 import math
 from typing import Tuple, List
+import message_filters
+import tf_transformations
 
-MAP_SIZE = 25  # map is 5m x 5m
+MAP_SIZE = 51  # map is 10.2m x 10.2m
+CAMERA_RANGE = 60  # camera field of view in degrees
 
+#NEED TO CHECK BOUNDS?
 
 class OccupancyMapNode(Node):
     def __init__(self):
@@ -15,17 +20,44 @@ class OccupancyMapNode(Node):
         # one cell is 20cm x 20cm
         # map[x][y]
         self.map = [[-1] * MAP_SIZE for x in range(MAP_SIZE)]
-        # start position (meter) in self.map and angle in radians
-        self.turtle_state = {"x": float(MAP_SIZE*20/2/100), "y": float(MAP_SIZE*20/2/100), "angle": math.radians(0)}
-        self.get_logger().info(str(self.turtle_state["x"]))
+        # start position (meter) in self.map and angle in degrees
+        self.turtle_state = {"x": float(MAP_SIZE*20/2/100), "y": float(MAP_SIZE*20/2/100), "angle": 0}
+        self.turtle_state_is_set = False
 
         self.publisher_ = self.create_publisher(PointArray, "updated_points", 10)
-        self.subscriber_Lidar = self.create_subscription(FloatArray, "lidar_values", self.callback_lidar_values, 10)
-        # to do: add subscriber for turtlebot movement
+        self.subscriber_lidar = message_filters.Subscriber(self, FloatArray, "lidar_values")
+        self.subscriber_pose = message_filters.Subscriber(self, Odometry, "/odom")
+
+        self.ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_lidar, self.subscriber_pose], 100, 0.2)
+        self.ts.registerCallback(self.callback_synchronised)
 
         self.get_logger().info("Occupancy Map started.")
 
+    def callback_synchronised(self, msg_lidar, msg_odom):
+        self.callback_pose(msg_odom)
+        self.callback_lidar_values(msg_lidar)
+
+    def callback_pose(self, msg):
+        # convert quaternion to euler angle
+        qx = msg.pose.pose.orientation.x
+        qy = msg.pose.pose.orientation.y
+        qz = msg.pose.pose.orientation.z
+        qw = msg.pose.pose.orientation.w
+        r,p,y = tf_transformations.euler_from_quaternion([qw, qx, qy, qz])
+        #self.get_logger().info(f"position x{msg.pose.pose.position.x}, y{msg.pose.pose.position.y}, r{r}")
+        #update turtle_state
+        self.turtle_state["angle"] = math.degrees(-r)  # was (-3.14, 3.14), now counter clockwise 360
+        #self.get_logger().info(f"{self.turtle_state['angle']}")
+        self.turtle_state["x"] = float(MAP_SIZE*20/100/2)+msg.pose.pose.position.x
+        self.turtle_state["y"] = float(MAP_SIZE*20/100/2)+msg.pose.pose.position.y
+        self.turtle_state_is_set = True
+
     def callback_lidar_values(self, msg):
+        if not self.turtle_state_is_set:
+            return
+
+        self.get_logger().info("stamp "+str(msg.header.stamp.sec))
+
         lidar_values = []
         for lst in msg.lists:
             lidar = []
@@ -39,13 +71,16 @@ class OccupancyMapNode(Node):
     def lidar_to_xy(self, data: Tuple[float, float, int]):
         """
         Converts a lidar point (relative to the turtlebot) to xy coordinates on the map.
-        :param data: Tuple in the format (angle, distance, classID). Angles are assumed counter-clockwise.
-        Distance is given in meters
-        :return: Dictionary in the format (x-coordinate, y-coordinate, classID). All coordiantes are real world
-        coordinates in cm.
+        :param data: Tuple in the format (angle, distance, classID). Angles are assumed counter-clockwise in degrees
+        from 0 to CAMERA_RANGE-1. Distance is given in meters
+        :return: Dictionary in the format (x-coordinate, y-coordinate, classID). All coordinates are real world
+        coordinates in meters.
         """
-        x = math.cos(-math.radians(data[0] + -self.turtle_state["angle"]))*data[1] + self.turtle_state["x"]
-        y = math.sin(-math.radians(data[0] + -self.turtle_state["angle"]))*data[1] + self.turtle_state["y"]
+        x = math.cos(math.radians(data[0] + self.turtle_state["angle"] + CAMERA_RANGE/2 + 90))*data[1] \
+            + self.turtle_state["x"]
+        y = math.sin(math.radians(data[0] + self.turtle_state["angle"] + CAMERA_RANGE/2 + 90))*data[1] \
+            + self.turtle_state["y"]
+        #self.get_logger().info(f"lidar: {data[0]} {data[1]} {data[2]}")
         return {"x": x, "y": y, "classID": data[2]}
 
     def update_map(self, positions: List[Tuple[float, float, int]]):
@@ -55,8 +90,9 @@ class OccupancyMapNode(Node):
         """
         for position in positions:
             xyc = self.lidar_to_xy(position)
+            #self.get_logger().info(f"xyc: {xyc}")
 
-            self.map[math.floor(xyc["x"])][math.floor(xyc["y"])] = xyc["classID"]
+            self.map[math.floor(xyc["x"]*100/20)][math.floor(xyc["y"]*100/20)] = xyc["classID"]
 
         self.publish_map()
 
@@ -75,9 +111,9 @@ class OccupancyMapNode(Node):
             for y in range(len(self.map[0])):
                 if self.map[x][y] != -1:
                     p = ClassedPoint()
-                    p.x = x
-                    p.y = y
-                    p.c = self.map[x][y]
+                    p.x = float(x*20/100)
+                    p.y = float(y*20/100)
+                    p.c = int(self.map[x][y])
 
                     points.append(p)
 
