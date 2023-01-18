@@ -36,8 +36,12 @@ def cluster(scan: LaserScan):
             index += 1
         elif distance != 0 and abs(distance - last) <= (distance * error):
             start, end, dist = clusters[index]
-            clusters[index] = (start, angle, dist)
+            clusters[index] = (start, angle, dist+distance)
             last = distance
+
+    for x in range( len(clusters)):
+        start,end,dist = clusters[x]
+        clusters[x] = (start,end,(dist/((end-start)+1)))
     return clusters
 
 
@@ -52,7 +56,7 @@ class LidarFusion(Node):
 
         self.lidar_sub=message_filters.Subscriber(self,LaserScan,"scan", qos_profile=qos_profile_sensor_data)
         self.image_sub=message_filters.Subscriber(self,FloatArray,"bounding_box")
-        ts = message_filters.ApproximateTimeSynchronizer([self.lidar_sub,self.image_sub],100,20,False)
+        ts = message_filters.ApproximateTimeSynchronizer([self.lidar_sub,self.image_sub],50,0.2,False)
         ts.registerCallback(self.bounding_callback)
         #self.create_subscription(LaserScan, "scan", self.lidar_callback, qos_profile_sensor_data)
         #self.create_subscription(FloatArray, "bounding_box", self.bounding_callback, 10)
@@ -84,22 +88,47 @@ class LidarFusion(Node):
             for e in lst.elements:
                 box.append(e)
                 processed_bounding_box.append(box)
-        fused = []
+        fused_one = []
+        fused=[]
+        for b in processed_bounding_box:
+            for obj in self.lidar_scan:
+                angle_s, angle_e, dist, = obj
+                possible_box = lin_map((angle_s + angle_e) / 2)
+                #self.get_logger().info(str(possible_box) + " " + str(dist))
+
+                if abs(possible_box - b[0]) < 0.04:
+                    if ((angle_s + angle_e) / 2, dist, b[5]) not in fused_one:
+                        if (len(fused_one) == 0):
+                            fused_one.append(((angle_s + angle_e) / 2, dist, b[5]))
+                        elif (dist < fused_one[0][1]):
+                            fused_one[0] = ((angle_s + angle_e) / 2, dist, b[5])
+            if (len(fused_one) == 1 and not (fused_one[0] in fused)):
+                fused.append(fused_one[0])
+        """
         for obj in self.lidar_scan:
             angle_s,angle_e, dist, = obj
             possible_box = lin_map((angle_s+angle_e)/2)
             self.get_logger().info(str(possible_box) + " "+str(dist))
-
-
+        
+            
+            
             for b in processed_bounding_box:
                 if abs(possible_box - b[0]) < 0.04:
-                    if((angle_s+angle_e)/2, dist, b[5]) not in fused:
-                        fused.append(((angle_s+angle_e)/2, dist, b[5]))
+                    if((angle_s+angle_e)/2, dist, b[5]) not in fused_one:
+                        if(len(fused_one)==0):
+                            fused_one.append(((angle_s+angle_e)/2, dist, b[5]))
+                        elif(dist<fused_one[0][1]):
+                            fused_one[0]=((angle_s+angle_e)/2, dist, b[5])
+                if(len(fused_one)==1):
+                    fused.append(fused_one[0])
             #for scan in self.lidar_scan.ranges:
+            """
+
         self.get_logger().info(str(self.lidar_scan))
         self.get_logger().info(str(fused))
 
         msg_lid = FloatArray()
+        msg_lid.header.stamp=msg.header.stamp
         for ele in fused:
             lid_data = FloatList()
             lid_data.elements = ele
