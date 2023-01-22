@@ -108,8 +108,8 @@ class OccupancyMapNode(Node):
 
         xycoordinates = np.array(points)
         xycoordinates = xycoordinates[:,:2]
-        dbscan = DBSCAN(eps=0.2, min_samples=2)
-        labels = dbscan.fit_predict(xycoordinates)
+        dbscan = DBSCAN(eps=0.3, min_samples=2)
+        labels = dbscan.fit_predict(points)
 
         clusters = {}
         for i, label in enumerate(labels):
@@ -139,9 +139,7 @@ class OccupancyMapNode(Node):
                 points_arr = np.array(points)
 
                 centroid = np.mean(points_arr[:,:2],axis=0)
-                classID = points[0]
-                classID = classID[2]
-                centroid = np.append(centroid,classID)
+                centroid = np.append(centroid,points_arr[0,2])
                 self.get_logger().info(str(centroid))
                 self.get_logger().info("helooa")
                 centroids.append(centroid)
