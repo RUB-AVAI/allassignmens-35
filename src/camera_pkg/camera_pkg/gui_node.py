@@ -218,8 +218,8 @@ class MainWindow(QWidget):
 
             ax.scatter(dfX.to_numpy(), dfY.to_numpy(), c=colors)
             ax.grid()
-            ax.set_xlim([0,5])
-            ax.set_ylim([0,5])
+            ax.set_xlim([0,10.2])
+            ax.set_ylim([0,10.2])
             self.canvas.draw()
 
 
