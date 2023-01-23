@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from avai_messages.msg import PointArray, ClassedPoint, FloatArray, FloatList
+from avai_messages.msg import PointArray, ClassedPoint, FloatArray, FloatList, Point, Polygon, Polylines
 from nav_msgs.msg import Odometry
 import math
 from typing import Tuple, List
@@ -9,11 +9,12 @@ from sklearn.cluster import DBSCAN
 import numpy as np
 import message_filters
 import tf_transformations
+from math import atan2
 
 MAP_SIZE = 51  # map is 10.2m x 10.2m
 CAMERA_RANGE = 60  # camera field of view in degrees
 
-#NEED TO CHECK BOUNDS?
+#NEED TO CHECK BOUNDS? Maybe replace array with list
 
 class OccupancyMapNode(Node):
     def __init__(self):
@@ -26,7 +27,8 @@ class OccupancyMapNode(Node):
         self.turtle_state = {"x": float(MAP_SIZE*20/2/100), "y": float(MAP_SIZE*20/2/100), "angle": 0}
         self.turtle_state_is_set = False
         self.latest_centroids = []
-        self.publisher_ = self.create_publisher(PointArray, "updated_points", 10)
+        self.publisher_pointarray = self.create_publisher(PointArray, "updated_points", 10)
+        self.publisher_polylines = self.create_publisher(Polylines, "polylines", 10)
         #self.subscriber_lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_lidar_values,10)
         self.subscriber_lidar = message_filters.Subscriber(self, FloatArray, "lidar_values")
         self.subscriber_pose = message_filters.Subscriber(self, Odometry, "/odom")
@@ -125,8 +127,6 @@ class OccupancyMapNode(Node):
                     clusters[newLabel] = []
                 clusters[newLabel].append(points[i])
 
-
-
         centroids = []
 
         for label, points in clusters.items():
@@ -185,8 +185,64 @@ class OccupancyMapNode(Node):
         point_array = PointArray()
         point_array.data = points
 
-        self.publisher_.publish(point_array)
+        self.publisher_pointarray.publish(point_array)
         self.get_logger().info("Published points list")
+
+    def map_to_point_lists(self):
+        blue = []
+        orange = []
+        yellow = []
+        for x in range(len(self.map)):
+            for y in range(len(self.map[0])):
+                c = self.map[x][y]
+                if c == -1:
+                    continue
+                if c == 0:
+                    blue.append((x, y))
+                if c == 1:
+                    orange.append((x, y))
+                if c == 2:
+                    yellow.append((x, y))
+        return blue, orange, yellow
+
+    def publish_polylines(self):
+        blue, orange, yellow = self.map_to_point_lists()
+        # might need to convert coordinates to float in map_to_point_lists()
+        polylines = Polylines()
+
+        to_polyline(blue)
+        polygon = Polygon()
+        for point in blue:
+            p = Point()
+            p.x = point[0]
+            p.y = point[1]
+            polygon.points.append(p)
+        polylines.blue = polygon
+
+        to_polyline(yellow)
+        polygon = Polygon()
+        for point in yellow:
+            p = Point()
+            p.x = point[0]
+            p.y = point[1]
+            polygon.points.append(p)
+        polylines.yellow = polygon
+        self.publisher_polylines.publish(polylines)
+
+
+def to_polyline(points: List):
+    """
+    Sorts a point list inplace, so that the points are in a circle.
+    First point is equal to the last point.
+    :param points: list of points to be modified
+    """
+    # get poiont with smallest x and y value
+    points.sort(key=lambda x: [x[1], x[0]])
+    p0 = points.pop(0)
+    # sort points counter-clockwise by their angle relative to p0
+    points.sort(key=lambda p: atan2(p[1]-p0[1], p[0]-p0[0]))  # atan2() is > 0, because all points are above p0
+    points.insert(0, p0)
+    points.append(p0)
 
 
 def main(args=None):

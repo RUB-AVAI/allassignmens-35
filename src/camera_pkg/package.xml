@@ -10,6 +10,8 @@
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>nav_2d_msgs</depend>
   <depend>os</depend>
   <depend>sys</depend>
   <depend>python-opencv</depend>

@@ -40,6 +40,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
     "msg/FloatList.msg"
     "msg/ClassedPoint.msg"
     "msg/PointArray.msg"
+    "msg/Point.msg"
+    "msg/Polygon.msg"
+    "msg/Polylines.msg"
     DEPENDENCIES builtin_interfaces std_msgs
 )
 
