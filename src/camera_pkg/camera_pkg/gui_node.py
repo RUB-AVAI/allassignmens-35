@@ -1,5 +1,6 @@
 import matplotlib.colors
 import pandas as pd
+import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
@@ -111,7 +112,7 @@ class GuiNode(Node):
         for point in msg.data:
             lidar_values.append([point.x, point.y, point.c])
         self.get_logger().info(str(lidar_values))
-        self.hmi.update_plot(lidar_values)
+        self.hmi.update_plot(msg)
 
     def callback_processed_image(self, msg):
         processed_image = self.cv_bridge_.compressed_imgmsg_to_cv2(msg)
@@ -195,16 +196,25 @@ class MainWindow(QWidget):
         self.node.publisher_.publish(msg)
         self.node.get_logger().info("Sent new frequency.")
 
-    def update_plot(self, data):
-        if len(data) != 0 :
+    def update_plot(self, msg):
+        if len(msg.data) != 0 :
             self.figure.clear()
             ax = self.figure.add_subplot(111)
-
+            data = []
+            for point in msg.data:
+                data.append([point.x, point.y, point.c])
+            turtlestate = msg.turtlestate
             #colors = ['blue', 'orange', 'yellow', 'black']
             df = pd.DataFrame(data)
             dfX = df.iloc[:, 0]
+            dfX = dfX.to_numpy()
+            dfX = np.append(dfX, turtlestate.x)
             dfY = df.iloc[:, 1]
+            dfY = dfY.to_numpy()
+            dfY = np.append(dfY, turtlestate.y)
             dfClasses = df.iloc[:, 2]
+            dfClasses = dfClasses.to_numpy()
+            dfClasses =  np.append(dfClasses, 3)
             colors = []
             for classes in dfClasses:
                 if classes == 0:
@@ -216,8 +226,21 @@ class MainWindow(QWidget):
                 if classes == 3:
                     colors.append("black")
 
-            ax.scatter(dfX.to_numpy(), dfY.to_numpy(), c=colors)
+            length = 1.5
+            angle = np.deg2rad(turtlestate.angle)
+            angle2 = np.deg2rad(turtlestate.angle+30)
+            angle3 = np.deg2rad(turtlestate.angle-30)
+            end = [turtlestate.x + np.cos(angle) * length, turtlestate.y + np.sin(angle)*length]
+            end2 = [turtlestate.x + np.cos(angle2) * length, turtlestate.y + np.sin(angle2)*length]
+            end3 = [turtlestate.x + np.cos(angle3) * length, turtlestate.y + np.sin(angle3)*length]
+            line = plt.Line2D([turtlestate.x, end[0]],[turtlestate.y,end[1]],linestyle='dashed')
+            line2 = plt.Line2D([turtlestate.x, end2[0]], [turtlestate.y, end2[1]],linestyle='dashed')
+            line3 = plt.Line2D([turtlestate.x, end3[0]], [turtlestate.y, end3[1]],linestyle='dashed')
+            ax.scatter(dfX, dfY, c=colors)
             ax.grid()
+            ax.add_line(line)
+            ax.add_line(line2)
+            ax.add_line(line3)
             ax.set_xlim([0,10.2])
             ax.set_ylim([0,10.2])
             self.canvas.draw()
