@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from avai_messages.msg import PointArray, ClassedPoint, FloatArray, FloatList, Point, Polygon, Polylines
+from avai_messages.msg import PointArray, ClassedPoint, FloatArray, FloatList, Point, Polygon, Polylines, TurtlebotState
 from nav_msgs.msg import Odometry
 import math
 from typing import Tuple, List
@@ -165,11 +165,10 @@ class OccupancyMapNode(Node):
         points = []
 
         # add position of turtlebot as point
-        turtle_point = ClassedPoint()
-        turtle_point.x = self.turtle_state["x"]
-        turtle_point.y = self.turtle_state["y"]
-        turtle_point.c = 3
-        points.append(turtle_point)
+        turtlestate = TurtlebotState()
+        turtlestate.x = self.turtle_state["x"]
+        turtlestate.y = self.turtle_state["y"]
+        turtlestate.angle = self.turtle_state["angle"]
 
         # add points of map
         for x in range(len(self.map)):
@@ -184,6 +183,7 @@ class OccupancyMapNode(Node):
 
         point_array = PointArray()
         point_array.data = points
+        point_array.turtlestate = turtlestate
 
         self.publisher_pointarray.publish(point_array)
         self.get_logger().info("Published points list")

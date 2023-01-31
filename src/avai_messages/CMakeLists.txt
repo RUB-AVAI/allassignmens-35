@@ -43,6 +43,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
     "msg/Point.msg"
     "msg/Polygon.msg"
     "msg/Polylines.msg"
+    "msg/TurtlebotState.msg"
     DEPENDENCIES builtin_interfaces std_msgs
 )
 
