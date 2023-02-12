@@ -26,7 +26,8 @@ setup(
             "camera_node = camera_pkg.camera_node:main",
             "image_processing_node = camera_pkg.image_processing_node:main",
             "gui_node = camera_pkg.gui_node:main",
-            "occupancy_map_node = camera_pkg.occupancy_map_node:main"
+            "occupancy_map_node = camera_pkg.occupancy_map_node:main",
+            "turtlebot_slam_node = camera_pkg.turtlebotslam_node:main"
         ]
     },
 )
