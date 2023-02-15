@@ -209,6 +209,7 @@ class OccupancyMapNode(Node):
                     yellow.append((x, y))
         return blue, orange, yellow
 """
+"""
     def publish_polylines(self):######BROKEN
         blue, orange, yellow = [],[],[]#self.map_to_point_lists()
         # might need to convert coordinates to float in map_to_point_lists()
@@ -235,11 +236,11 @@ class OccupancyMapNode(Node):
 
 
 def to_polyline(points: List):
-    """
+    
     Sorts a point list inplace, so that the points are in a circle.
     First point is equal to the last point.
     :param points: list of points to be modified
-    """
+    
     # get poiont with smallest x and y value
     points.sort(key=lambda x: [x[1], x[0]])
     p0 = points.pop(0)
@@ -248,7 +249,7 @@ def to_polyline(points: List):
     points.insert(0, p0)
     points.append(p0)
 
-
+"""
 def main(args=None):
     rclpy.init(args=args)
     node = OccupancyMapNode()
