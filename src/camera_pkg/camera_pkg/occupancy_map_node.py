@@ -3,6 +3,7 @@ import rclpy
 from rclpy.node import Node
 from avai_messages.msg import PointArray, ClassedPoint, FloatArray, FloatList, Point, Polygon, Polylines, TurtlebotState
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import TransformStamped
 import math
 from typing import Tuple, List
 from sklearn.cluster import DBSCAN
@@ -32,9 +33,9 @@ class OccupancyMapNode(Node):
         self.publisher_polylines = self.create_publisher(Polylines, "polylines", 10)
         #self.subscriber_lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_lidar_values,10)
         self.subscriber_lidar = message_filters.Subscriber(self, FloatArray, "lidar_values")
-        self.subscriber_pose = message_filters.Subscriber(self, Odometry, "/odom")
-
-        self.ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_lidar, self.subscriber_pose], 100, 0.2)
+        #self.subscriber_pose = message_filters.Subscriber(self, Odometry, "/odom") # old
+        self.subscriber_pose = message_filters.Subscriber(self, TransformStamped, "/turtlebot_pose")
+        self.ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_lidar, self.subscriber_pose], 100, .1)
         self.ts.registerCallback(self.callback_synchronised)
 
         self.get_logger().info("Occupancy Map started.")
@@ -45,19 +46,23 @@ class OccupancyMapNode(Node):
 
     def callback_pose(self, msg):
         # convert quaternion to euler angle
-        qx = msg.pose.pose.orientation.x
+        """qx = msg.pose.pose.orientation.x
         qy = msg.pose.pose.orientation.y
         qz = msg.pose.pose.orientation.z
-        qw = msg.pose.pose.orientation.w
+        qw = msg.pose.pose.orientation.w"""
+        qx = msg.transform.rotation.x
+        qy = msg.transform.rotation.y
+        qz = msg.transform.rotation.z
+        qw = msg.transform.rotation.w
         r,p,y = \
             tf_transformations.euler_from_quaternion\
                 ([qw, qx, qy, qz])
         #self.get_logger().info(f"position x{msg.pose.pose.position.x}, y{msg.pose.pose.position.y}, r{r}")
         #update turtle_state
-        self.turtle_state["angle"] = math.degrees(-r)  # was (-3.14, 3.14), now counter clockwise 360
+        self.turtle_state["angle"] = math.degrees(r)  # was (-3.14, 3.14), now counter clockwise 360
         #self.get_logger().info(f"{self.turtle_state['angle']}")
-        self.turtle_state["x"] = float(MAP_SIZE/2) + msg.pose.pose.position.x
-        self.turtle_state["y"] = float(MAP_SIZE/2) + msg.pose.pose.position.y
+        self.turtle_state["x"] = float(MAP_SIZE/2) + msg.transform.translation.x#msg.pose.pose.position.x
+        self.turtle_state["y"] = float(MAP_SIZE/2) + msg.transform.translation.y#msg.pose.pose.position.y
         self.turtle_state_is_set = True
 
     def callback_lidar_values(self, msg):
@@ -108,7 +113,7 @@ class OccupancyMapNode(Node):
 
         xycoordinates = np.array(points)
         xycoordinates = xycoordinates[:,:2]
-        dbscan = DBSCAN(eps=0.3, min_samples=2)
+        dbscan = DBSCAN(eps=0.2, min_samples=2)
         labels = dbscan.fit_predict(points)
 
         clusters = {}
