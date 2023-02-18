@@ -11,8 +11,8 @@ import message_filters
 import tf_transformations
 from math import atan2
 
-MAP_SIZE = 51  # map is 10.2m x 10.2m
-CAMERA_RANGE = 60  # camera field of view in degrees
+MAP_SIZE = 10  # map is assumed 10m x 10m
+CAMERA_RANGE = 62.5  # camera field of view in degrees
 
 #NEED TO CHECK BOUNDS? Maybe replace array with list
 
@@ -21,12 +21,13 @@ class OccupancyMapNode(Node):
         super().__init__("occupancy_map")
 
         # one cell is 20cm x 20cm
-        # map[x][y]
-        self.map = [[-1] * MAP_SIZE for x in range(MAP_SIZE)]
+        #map is a list of points (x,y,classID)
+        self.map = []  # [[-1] * MAP_SIZE for x in range(MAP_SIZE)] # map[x][y]
         # start position (meter) in self.map and angle in degrees
-        self.turtle_state = {"x": float(MAP_SIZE*20/2/100), "y": float(MAP_SIZE*20/2/100), "angle": 0}
+        self.turtle_state = {"x": float(MAP_SIZE/2), "y": float(MAP_SIZE/2), "angle": 0}
         self.turtle_state_is_set = False
-        self.latest_centroids = []
+        #self.latest_centroids = []
+
         self.publisher_pointarray = self.create_publisher(PointArray, "updated_points", 10)
         self.publisher_polylines = self.create_publisher(Polylines, "polylines", 10)
         #self.subscriber_lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_lidar_values,10)
@@ -55,10 +56,8 @@ class OccupancyMapNode(Node):
         #update turtle_state
         self.turtle_state["angle"] = math.degrees(-r)  # was (-3.14, 3.14), now counter clockwise 360
         #self.get_logger().info(f"{self.turtle_state['angle']}")
-        self.turtle_state["x"] = \
-            float(MAP_SIZE*20/100/2)+msg.pose.pose.position.x
-        self.turtle_state["y"] = \
-            float(MAP_SIZE*20/100/2)+msg.pose.pose.position.y
+        self.turtle_state["x"] = float(MAP_SIZE/2) + msg.pose.pose.position.x
+        self.turtle_state["y"] = float(MAP_SIZE/2) + msg.pose.pose.position.y
         self.turtle_state_is_set = True
 
     def callback_lidar_values(self, msg):
@@ -82,15 +81,14 @@ class OccupancyMapNode(Node):
         Converts a lidar point (relative to the turtlebot) to xy coordinates on the map.
         :param data: Tuple in the format (angle, distance, classID). Angles are assumed counter-clockwise in degrees
         from 0 to CAMERA_RANGE-1. Distance is given in meters
-        :return: Dictionary in the format (x-coordinate, y-coordinate, classID). All coordinates are real world
+        :return: List in the format [x-coordinate, y-coordinate, classID]. All coordinates are real world
         coordinates in meters.
         """
-        x = math.cos(math.radians(data[0] + self.turtle_state["angle"] + CAMERA_RANGE/2 + 90))*data[1] \
-            + self.turtle_state["x"]
-        y = math.sin(math.radians(data[0] + self.turtle_state["angle"] + CAMERA_RANGE/2 + 90))*data[1] \
-            + self.turtle_state["y"]
-        self.get_logger().info(f"lidar: {data[0]} {data[1]} {data[2]}")
-        return {"x": x, "y": y, "classID": data[2]}
+        absolute_angle = math.radians(data[0] + self.turtle_state["angle"] + CAMERA_RANGE/2 + 90)
+        x = math.cos(absolute_angle)*data[1] + self.turtle_state["x"]
+        y = math.sin(absolute_angle)*data[1] + self.turtle_state["y"]
+        #self.get_logger().info(f"lidar: {data[0]} {data[1]} {data[2]}")
+        return [x,y,data[2]]  # {"x": x, "y": y, "classID": data[2]}
 
     def update_map(self, positions: List[Tuple[float, float, int]]):
         """
@@ -103,10 +101,10 @@ class OccupancyMapNode(Node):
 
            # self.map[math.floor(xyc["x"]*100/20)][math.floor(xyc["y"]*100/20)] = xyc["classID"]
 
-        points = self.latest_centroids
+        points = self.map
         for position in positions:
             xyc = self.lidar_to_xy(position)
-            points.append([xyc["x"],xyc["y"],xyc["classID"]])
+            points.append(xyc)
 
         xycoordinates = np.array(points)
         xycoordinates = xycoordinates[:,:2]
@@ -140,23 +138,24 @@ class OccupancyMapNode(Node):
 
                 centroid = np.mean(points_arr[:,:2],axis=0)
                 centroid = np.append(centroid,points_arr[0,2])
-                self.get_logger().info(str(centroid))
-                self.get_logger().info("helooa")
+                #self.get_logger().info(str(centroid))
+                #self.get_logger().info("helooa")
                 centroids.append(centroid)
 
         #Reset Map
 
-        self.map = [[-1] * MAP_SIZE for x in range(MAP_SIZE)]
+        #self.map = []  #[[-1] * MAP_SIZE for x in range(MAP_SIZE)]
 
         #Save latest centroids for next clustering
 
-        self.latest_centroids = centroids
+        self.map = centroids
         self.get_logger().info(str(centroids))
 
+        """
         for centroid in centroids:
             self.get_logger().info(str(centroid))
             self.map[math.floor(centroid[0]*100/20)][math.floor(centroid[1]*100/20)] = centroid[2]
-
+        """
         self.publish_map()
 
     def publish_map(self):
@@ -169,7 +168,7 @@ class OccupancyMapNode(Node):
         turtlestate.angle = self.turtle_state["angle"]
 
         # add points of map
-        for x in range(len(self.map)):
+        """for x in range(len(self.map)):
             for y in range(len(self.map[0])):
                 if self.map[x][y] != -1:
                     p = ClassedPoint()
@@ -178,6 +177,13 @@ class OccupancyMapNode(Node):
                     p.c = int(self.map[x][y])
 
                     points.append(p)
+        """
+        for point in self.map:
+            cp = ClassedPoint()
+            cp.x = float(point[0])
+            cp.y = float(point[1])
+            cp.c = int(point[2])
+            points.append(cp)
 
         point_array = PointArray()
         point_array.data = points
@@ -185,7 +191,7 @@ class OccupancyMapNode(Node):
 
         self.publisher_pointarray.publish(point_array)
         self.get_logger().info("Published points list")
-
+"""
     def map_to_point_lists(self):
         blue = []
         orange = []
@@ -202,9 +208,10 @@ class OccupancyMapNode(Node):
                 if c == 2:
                     yellow.append((x, y))
         return blue, orange, yellow
-
-    def publish_polylines(self):
-        blue, orange, yellow = self.map_to_point_lists()
+"""
+"""
+    def publish_polylines(self):######BROKEN
+        blue, orange, yellow = [],[],[]#self.map_to_point_lists()
         # might need to convert coordinates to float in map_to_point_lists()
         polylines = Polylines()
 
@@ -229,11 +236,11 @@ class OccupancyMapNode(Node):
 
 
 def to_polyline(points: List):
-    """
+    
     Sorts a point list inplace, so that the points are in a circle.
     First point is equal to the last point.
     :param points: list of points to be modified
-    """
+    
     # get poiont with smallest x and y value
     points.sort(key=lambda x: [x[1], x[0]])
     p0 = points.pop(0)
@@ -242,7 +249,7 @@ def to_polyline(points: List):
     points.insert(0, p0)
     points.append(p0)
 
-
+"""
 def main(args=None):
     rclpy.init(args=args)
     node = OccupancyMapNode()
