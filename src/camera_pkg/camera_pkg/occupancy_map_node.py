@@ -10,7 +10,7 @@ from sklearn.cluster import DBSCAN
 import numpy as np
 import message_filters
 import tf_transformations
-from math import atan2
+from math import atan2,pi
 
 MAP_SIZE = 10  # map is assumed 10m x 10m
 CAMERA_RANGE = 62.5  # camera field of view in degrees
@@ -80,6 +80,7 @@ class OccupancyMapNode(Node):
             lidar_values.append(tuple(lidar))
 
         self.update_map(lidar_values)
+        self.publish_polylines()
 
     def lidar_to_xy(self, data: Tuple[float, float, int]):
         """
@@ -196,25 +197,8 @@ class OccupancyMapNode(Node):
 
         self.publisher_pointarray.publish(point_array)
         self.get_logger().info("Published points list")
-"""
-    def map_to_point_lists(self):
-        blue = []
-        orange = []
-        yellow = []
-        for x in range(len(self.map)):
-            for y in range(len(self.map[0])):
-                c = self.map[x][y]
-                if c == -1:
-                    continue
-                if c == 0:
-                    blue.append((x, y))
-                if c == 1:
-                    orange.append((x, y))
-                if c == 2:
-                    yellow.append((x, y))
-        return blue, orange, yellow
-"""
-"""
+
+    """
     def publish_polylines(self):######BROKEN
         blue, orange, yellow = [],[],[]#self.map_to_point_lists()
         # might need to convert coordinates to float in map_to_point_lists()
@@ -254,7 +238,38 @@ def to_polyline(points: List):
     points.insert(0, p0)
     points.append(p0)
 
-"""
+    """
+    def publish_polylines(self):
+        blue = []
+        yellow = []
+        for p in self.map:
+            if p[2] == 0:
+                blue.append(p)
+            if p[2] == 2:
+                yellow.append(p)
+
+        blue_center = (sum([p[0] for p in blue]) / len(blue), sum([p[1] for p in blue]) / len(blue))
+        yellow_center = (sum([p[0] for p in yellow]) / len(yellow), sum([p[1] for p in yellow]) / len(yellow))
+        # maybe try this instead of atan2, if performance is bad (couldn't get this to work first time)
+        # https://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
+        # currently sorting points by angle relative to center of all points => should work for simple polygons
+        blue.sort(key=lambda p: angle if (angle := atan2(p[1] - blue_center[1], p[0] - blue_center[0])) >= 0
+            else 2 * pi + angle)
+        blue.append(blue[0])
+        yellow.sort(key=lambda p: angle if (angle := atan2(p[1] - yellow_center[1], p[0] - yellow_center[0])) >= 0
+            else 2 * pi + angle)
+        yellow.append(yellow[0])
+
+        polylines = Polylines()
+        polygon = Polygon()
+        polygon.points = blue
+        polylines.blue = polygon
+        polygon = Polygon()
+        polygon.points = yellow
+        polylines.yellow = polygon
+        self.publisher_polylines.publish(polylines)
+
+
 def main(args=None):
     rclpy.init(args=args)
     node = OccupancyMapNode()
