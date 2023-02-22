@@ -57,12 +57,12 @@ class OccupancyMapNode(Node):
         r,p,y = \
             tf_transformations.euler_from_quaternion\
                 ([qw, qx, qy, qz])
-        #self.get_logger().info(f"position x{msg.pose.pose.position.x}, y{msg.pose.pose.position.y}, r{r}")
+        self.get_logger().info(f"position y{y}, p{p}, r{r}")
         #update turtle_state
         self.turtle_state["angle"] = math.degrees(r)  # was (-3.14, 3.14), now counter clockwise 360
-        #self.get_logger().info(f"{self.turtle_state['angle']}")
-        self.turtle_state["x"] = float(MAP_SIZE/2) + msg.transform.translation.x#msg.pose.pose.position.x
-        self.turtle_state["y"] = float(MAP_SIZE/2) + msg.transform.translation.y#msg.pose.pose.position.y
+        self.get_logger().info(f"{self.turtle_state['angle']}")
+        self.turtle_state["x"] = float(MAP_SIZE/2) - msg.transform.translation.y#msg.pose.pose.position.x
+        self.turtle_state["y"] = float(MAP_SIZE/2) - msg.transform.translation.x#msg.pose.pose.position.y
         self.turtle_state_is_set = True
 
     def callback_lidar_values(self, msg):
@@ -80,7 +80,7 @@ class OccupancyMapNode(Node):
             lidar_values.append(tuple(lidar))
 
         self.update_map(lidar_values)
-        self.publish_polylines()
+        #self.publish_polylines()
 
     def lidar_to_xy(self, data: Tuple[float, float, int]):
         """
@@ -90,7 +90,7 @@ class OccupancyMapNode(Node):
         :return: List in the format [x-coordinate, y-coordinate, classID]. All coordinates are real world
         coordinates in meters.
         """
-        absolute_angle = math.radians(data[0] + self.turtle_state["angle"] + CAMERA_RANGE/2 + 90)
+        absolute_angle = math.radians(data[0] + self.turtle_state["angle"]+CAMERA_RANGE)
         x = math.cos(absolute_angle)*data[1] + self.turtle_state["x"]
         y = math.sin(absolute_angle)*data[1] + self.turtle_state["y"]
         #self.get_logger().info(f"lidar: {data[0]} {data[1]} {data[2]}")
@@ -112,8 +112,7 @@ class OccupancyMapNode(Node):
             xyc = self.lidar_to_xy(position)
             points.append(xyc)
 
-        xycoordinates = np.array(points)
-        xycoordinates = xycoordinates[:,:2]
+
         dbscan = DBSCAN(eps=0.2, min_samples=2)
         labels = dbscan.fit_predict(points)
 
@@ -239,6 +238,7 @@ def to_polyline(points: List):
     points.append(p0)
 
     """
+    """
     def publish_polylines(self):
         blue = []
         yellow = []
@@ -248,8 +248,8 @@ def to_polyline(points: List):
             if p[2] == 2:
                 yellow.append(p)
 
-        blue_center = (sum([p[0] for p in blue]) / len(blue), sum([p[1] for p in blue]) / len(blue))
-        yellow_center = (sum([p[0] for p in yellow]) / len(yellow), sum([p[1] for p in yellow]) / len(yellow))
+        if len(blue)  > 0: blue_center = (sum([p[0] for p in blue]) / len(blue), sum([p[1] for p in blue]) / len(blue))
+        if len(yellow )>0: yellow_center = (sum([p[0] for p in yellow]) / len(yellow), sum([p[1] for p in yellow]) / len(yellow))
         # maybe try this instead of atan2, if performance is bad (couldn't get this to work first time)
         # https://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
         # currently sorting points by angle relative to center of all points => should work for simple polygons
@@ -268,7 +268,7 @@ def to_polyline(points: List):
         polygon.points = yellow
         polylines.yellow = polygon
         self.publisher_polylines.publish(polylines)
-
+"""
 
 def main(args=None):
     rclpy.init(args=args)

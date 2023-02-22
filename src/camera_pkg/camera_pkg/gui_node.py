@@ -227,15 +227,15 @@ class MainWindow(QWidget):
                     colors.append("black")
 
             length = 1.5
-            angle = np.deg2rad(turtlestate.angle+31.5)
-            angle2 = np.deg2rad(turtlestate.angle+61.5)
-            angle3 = np.deg2rad(turtlestate.angle)
+            angle = np.deg2rad(turtlestate.angle+93)
+            angle2 = np.deg2rad(turtlestate.angle+124.5)
+            angle3 = np.deg2rad(turtlestate.angle+61.5)
             end = [turtlestate.x + np.cos(angle) * length, turtlestate.y + np.sin(angle)*length]
             end2 = [turtlestate.x + np.cos(angle2) * length, turtlestate.y + np.sin(angle2)*length]
             end3 = [turtlestate.x + np.cos(angle3) * length, turtlestate.y + np.sin(angle3)*length]
             line = plt.Line2D([turtlestate.x, end[0]],[turtlestate.y,end[1]],linestyle='dashed')
-            line2 = plt.Line2D([turtlestate.x, end2[0]], [turtlestate.y, end2[1]],linestyle='dashed')
-            line3 = plt.Line2D([turtlestate.x, end3[0]], [turtlestate.y, end3[1]],linestyle='dashed')
+            line2 = plt.Line2D([turtlestate.x, end2[0]], [turtlestate.y, end2[1]],linestyle='dashed',color="red")
+            line3 = plt.Line2D([turtlestate.x, end3[0]], [turtlestate.y, end3[1]],linestyle='dashed',color="orange")
             ax.scatter(dfX, dfY, c=colors)
             ax.grid()
             ax.add_line(line)
