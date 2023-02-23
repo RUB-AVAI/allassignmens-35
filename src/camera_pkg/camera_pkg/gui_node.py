@@ -227,9 +227,9 @@ class MainWindow(QWidget):
                     colors.append("black")
 
             length = 1.5
-            angle = np.deg2rad(turtlestate.angle+93)
-            angle2 = np.deg2rad(turtlestate.angle+124.5)
-            angle3 = np.deg2rad(turtlestate.angle+61.5)
+            angle = np.deg2rad(turtlestate.angle)
+            angle2 = np.deg2rad(turtlestate.angle+31.5)
+            angle3 = np.deg2rad(turtlestate.angle-31.5)
             end = [turtlestate.x + np.cos(angle) * length, turtlestate.y + np.sin(angle)*length]
             end2 = [turtlestate.x + np.cos(angle2) * length, turtlestate.y + np.sin(angle2)*length]
             end3 = [turtlestate.x + np.cos(angle3) * length, turtlestate.y + np.sin(angle3)*length]

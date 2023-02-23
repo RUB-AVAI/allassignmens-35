@@ -35,12 +35,13 @@ class OccupancyMapNode(Node):
         self.subscriber_lidar = message_filters.Subscriber(self, FloatArray, "lidar_values")
         #self.subscriber_pose = message_filters.Subscriber(self, Odometry, "/odom") # old
         self.subscriber_pose = message_filters.Subscriber(self, TransformStamped, "/turtlebot_pose")
-        self.ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_lidar, self.subscriber_pose], 100, .1)
+        self.ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_lidar, self.subscriber_pose], 100, .2)
         self.ts.registerCallback(self.callback_synchronised)
 
         self.get_logger().info("Occupancy Map started.")
 
     def callback_synchronised(self, msg_lidar, msg_odom):
+        self.get_logger().info("test")
         self.callback_pose(msg_odom)
         self.callback_lidar_values(msg_lidar)
 
@@ -59,10 +60,10 @@ class OccupancyMapNode(Node):
                 ([qw, qx, qy, qz])
         self.get_logger().info(f"position y{y}, p{p}, r{r}")
         #update turtle_state
-        self.turtle_state["angle"] = math.degrees(r)  # was (-3.14, 3.14), now counter clockwise 360
+        self.turtle_state["angle"] = math.degrees(-r)  # was (-3.14, 3.14), now counter clockwise 360
         self.get_logger().info(f"{self.turtle_state['angle']}")
-        self.turtle_state["x"] = float(MAP_SIZE/2) - msg.transform.translation.y#msg.pose.pose.position.x
-        self.turtle_state["y"] = float(MAP_SIZE/2) - msg.transform.translation.x#msg.pose.pose.position.y
+        self.turtle_state["x"] = float(MAP_SIZE/2) - msg.transform.translation.x#msg.pose.pose.position.x
+        self.turtle_state["y"] = float(MAP_SIZE/2) - msg.transform.translation.y#msg.pose.pose.position.y
         self.turtle_state_is_set = True
 
     def callback_lidar_values(self, msg):
@@ -90,7 +91,7 @@ class OccupancyMapNode(Node):
         :return: List in the format [x-coordinate, y-coordinate, classID]. All coordinates are real world
         coordinates in meters.
         """
-        absolute_angle = math.radians(data[0] + self.turtle_state["angle"]+CAMERA_RANGE)
+        absolute_angle = math.radians(data[0] + self.turtle_state["angle"]-CAMERA_RANGE/2)
         x = math.cos(absolute_angle)*data[1] + self.turtle_state["x"]
         y = math.sin(absolute_angle)*data[1] + self.turtle_state["y"]
         #self.get_logger().info(f"lidar: {data[0]} {data[1]} {data[2]}")
@@ -113,7 +114,7 @@ class OccupancyMapNode(Node):
             points.append(xyc)
 
 
-        dbscan = DBSCAN(eps=0.2, min_samples=2)
+        dbscan = DBSCAN(eps=0.3, min_samples=2)
         labels = dbscan.fit_predict(points)
 
         clusters = {}

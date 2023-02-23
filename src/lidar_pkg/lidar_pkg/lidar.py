@@ -10,19 +10,22 @@ import message_filters
 
 def lin_map(x):
     #return 1/(212 - 148) * (x-148)
-    return 1-(1/64*x)
+    if x <30:
+        return 1-(1/62*x)
+    else:
+        return 1-(1/56*x)
 
 # 48,5 25,8 6,3
 def filter_scan(scan: LaserScan):
     for r in range(len(scan.ranges)):
         #if r >= 1 and scan.ranges[r] != 0 and scan.ranges[r-1] == 0 and scan.ranges[r+1] == 0:
         #    scan.ranges[r] = 0
-        if scan.ranges[r] > 2:
+        if scan.ranges[r] > 1:
             scan.ranges[r] = 0
 
 
 def cluster(scan: LaserScan):
-    fov = scan.ranges[145:205]
+    fov = scan.ranges[147:203]
 
     index = -1
     error = 0.1
@@ -30,7 +33,8 @@ def cluster(scan: LaserScan):
     clusters = []
 
     for angle, distance in enumerate(fov):
-        if abs(distance - last) > (0.15) and distance != 0:
+
+        if abs(distance - last) > (0.5) and distance != 0:
             clusters.append((angle, angle, distance))
             last = distance
             index += 1
@@ -56,7 +60,7 @@ class LidarFusion(Node):
 
         self.lidar_sub=message_filters.Subscriber(self,LaserScan,"scan", qos_profile=qos_profile_sensor_data)
         self.image_sub=message_filters.Subscriber(self,FloatArray,"bounding_box")
-        ts = message_filters.ApproximateTimeSynchronizer([self.lidar_sub,self.image_sub],50,0.2,False)
+        ts = message_filters.ApproximateTimeSynchronizer([self.lidar_sub,self.image_sub],50,0.1,False)
         ts.registerCallback(self.bounding_callback)
         #self.create_subscription(LaserScan, "scan", self.lidar_callback, qos_profile_sensor_data)
         #self.create_subscription(FloatArray, "bounding_box", self.bounding_callback, 10)
@@ -77,8 +81,8 @@ class LidarFusion(Node):
     def bounding_callback(self,lidar,msg):
         self.lidar_scan = lidar
 
-        self.get_logger().info(str(len(self.lidar_scan.ranges)))
-        filter_scan(self.lidar_scan)
+
+        #filter_scan(self.lidar_scan)
         self.lidar_scan = cluster(self.lidar_scan)
 
 
@@ -90,6 +94,7 @@ class LidarFusion(Node):
                 processed_bounding_box.append(box)
         fused_one = []
         fused=[]
+
         for b in processed_bounding_box:
             for obj in self.lidar_scan:
                 angle_s, angle_e, dist, = obj
