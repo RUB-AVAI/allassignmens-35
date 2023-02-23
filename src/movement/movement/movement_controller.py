@@ -2,8 +2,9 @@ import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
+from avai_messages.msg import PointArray
 import numpy
-from math import atan2
+from math import atan2, copysign, radians, cos, sin, sqrt
 import tf_transformations
 from pynput.keyboard import Key, Listener
 
@@ -20,6 +21,7 @@ class MovementController(Node):
         self.create_subscription(Odometry, "/odom", self.odom_callback, 10)
         # wherever we get the point list
        # self.create_subscription(None,"None",self.path_callback,10)
+        self.subscriber_map = self.create_subscription(PointArray, "updated_points", self.map_callback, 10)
 
         listener = Listener(
                 on_press=self.on_press,
@@ -64,6 +66,55 @@ class MovementController(Node):
 
                 self.twist.publish(move)
 
+    def map_callback(self, msg):
+        if len(msg.data) <= 0:
+            return
+        points = []
+        for point in msg.data:
+            points.append([point.x, point.y, point.c])
+        turtlestate = {"x": msg.turtlestate.x, "y": msg.turtlestate.y, "angle": msg.turtlestate.angle}
+
+        self.calculate_next_target(turtlestate, points)
+
+    def calculate_next_target(self, turtlestate, point_map):
+        distance_threshold = 1
+        sign = lambda x: copysign(1, x)
+
+        # get front points
+        yellow = []
+        blue = []
+        # use a 90 degree vector to decide if a point is in front of the bot or not
+        #vector goes from bot position to a point (x2,y2) in the direction of the vector
+        vect_angle = radians(turtlestate["angle"] + 90)
+        x2 = cos(vect_angle) * 2
+        y2 = sin(vect_angle) * 2
+        for point in point_map:
+            #check if point is "left" or "right" of vector
+            front = sign((x2 - turtlestate["x"]) * (point[1] - turtlestate["y"]) -
+                         (y2 - turtlestate["y"]) * (point[0] - turtlestate["x"]))
+            if front > 0:
+                # only points with a distance < distance_threshold are valid
+                distance = sqrt((point[0] - turtlestate["x"]) ** 2 + (point[1] - turtlestate["y"]) ** 2)
+                if distance <= distance_threshold:
+                    if point[2] == 0:
+                        blue.append([point, distance])
+                    if point[2] == 2:
+                        yellow.append([point, distance])
+        if len(yellow) == 0:
+            return  # turn slowly
+        if len(blue) == 0:
+            return  # turn slowly in the other direction
+
+        yellow.sort(key=lambda x: x[1])
+        blue.sort(key=lambda x: x[1])
+
+        min_yellow = yellow[0][0]
+        min_blue = blue[0][0]
+
+        middle_point = ((min_yellow[0] - min_blue[0]) * 0.5 + min_blue[0],
+                        (min_yellow[1] - min_blue[1]) * 0.5 + min_blue[1])
+
+        self.target = middle_point
 
 def main(args=None):
     rclpy.init(args=args)
