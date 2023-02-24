@@ -96,19 +96,20 @@ class LidarFusion(Node):
         fused=[]
 
         for b in processed_bounding_box:
-            for obj in self.lidar_scan:
-                angle_s, angle_e, dist, = obj
-                possible_box = lin_map((angle_s + angle_e) / 2)
-                #self.get_logger().info(str(possible_box) + " " + str(dist))
+            if b[3] > 0.15:
+                for obj in self.lidar_scan:
+                    angle_s, angle_e, dist, = obj
+                    possible_box = lin_map((angle_s + angle_e) / 2)
+                    #self.get_logger().info(str(possible_box) + " " + str(dist))
 
-                if abs(possible_box - b[0]) < 0.04:
-                    if ((angle_s + angle_e) / 2, dist, b[5]) not in fused_one:
-                        if (len(fused_one) == 0):
-                            fused_one.append(((angle_s + angle_e) / 2, dist, b[5]))
-                        elif (dist < fused_one[0][1]):
-                            fused_one[0] = ((angle_s + angle_e) / 2, dist, b[5])
-            if (len(fused_one) == 1 and not (fused_one[0] in fused)):
-                fused.append(fused_one[0])
+                    if abs(possible_box - b[0]) < 0.04:
+                        if ((angle_s + angle_e) / 2, dist, b[5]) not in fused_one:
+                            if (len(fused_one) == 0):
+                                fused_one.append(((angle_s + angle_e) / 2, dist, b[5]))
+                            elif (dist < fused_one[0][1]):
+                                fused_one[0] = ((angle_s + angle_e) / 2, dist, b[5])
+                if (len(fused_one) == 1 and not (fused_one[0] in fused)):
+                    fused.append(fused_one[0])
         """
         for obj in self.lidar_scan:
             angle_s,angle_e, dist, = obj

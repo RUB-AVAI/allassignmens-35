@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "movement_controller=movement.movement_controller:main"
+            "movement_controller=movement.movement_controller:main",
+            "point_move=movement.point_based_movement:main"
         ],
     },
 )
