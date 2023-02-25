@@ -225,6 +225,8 @@ class MainWindow(QWidget):
                     colors.append("yellow")
                 if classes == 3:
                     colors.append("black")
+                if classes == 4:
+                    colors.append("red")
 
             length = 1.5
             angle = np.deg2rad(turtlestate.angle)
