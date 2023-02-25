@@ -44,9 +44,9 @@ class OccupancyMapNode(Node):
         self.get_logger().info("Occupancy Map started.")
 
     def callback_synchronised(self, msg_lidar, msg_odom):
-        self.get_logger().info("test")
         self.callback_pose(msg_odom)
         self.callback_lidar_values(msg_lidar)
+        self.publish_map()
 
     def callback_pose(self, msg):
         # convert quaternion to euler angle
@@ -98,7 +98,7 @@ class OccupancyMapNode(Node):
         x = math.cos(absolute_angle)*data[1] + self.turtle_state["x"]
         y = math.sin(absolute_angle)*data[1] + self.turtle_state["y"]
         #self.get_logger().info(f"lidar: {data[0]} {data[1]} {data[2]}")
-        return [x,y,data[2]]  # {"x": x, "y": y, "classID": data[2]}
+        return (x,y,data[2])  # {"x": x, "y": y, "classID": data[2]}
 
     def get_middlepoint(self, msg):
         middlepoint_map = msg.data
@@ -171,7 +171,6 @@ class OccupancyMapNode(Node):
             self.get_logger().info(str(centroid))
             self.map[math.floor(centroid[0]*100/20)][math.floor(centroid[1]*100/20)] = centroid[2]
         """
-        self.publish_map()
 
     def publish_map(self):
         points = []
@@ -207,78 +206,6 @@ class OccupancyMapNode(Node):
         self.publisher_pointarray.publish(point_array)
         self.get_logger().info("Published points list")
 
-    """
-    def publish_polylines(self):######BROKEN
-        blue, orange, yellow = [],[],[]#self.map_to_point_lists()
-        # might need to convert coordinates to float in map_to_point_lists()
-        polylines = Polylines()
-
-        to_polyline(blue)
-        polygon = Polygon()
-        for point in blue:
-            p = Point()
-            p.x = point[0]
-            p.y = point[1]
-            polygon.points.append(p)
-        polylines.blue = polygon
-
-        to_polyline(yellow)
-        polygon = Polygon()
-        for point in yellow:
-            p = Point()
-            p.x = point[0]
-            p.y = point[1]
-            polygon.points.append(p)
-        polylines.yellow = polygon
-        self.publisher_polylines.publish(polylines)
-
-
-def to_polyline(points: List):
-    
-    Sorts a point list inplace, so that the points are in a circle.
-    First point is equal to the last point.
-    :param points: list of points to be modified
-    
-    # get poiont with smallest x and y value
-    points.sort(key=lambda x: [x[1], x[0]])
-    p0 = points.pop(0)
-    # sort points counter-clockwise by their angle relative to p0
-    points.sort(key=lambda p: atan2(p[1]-p0[1], p[0]-p0[0]))  # atan2() is > 0, because all points are above p0
-    points.insert(0, p0)
-    points.append(p0)
-
-    """
-    """
-    def publish_polylines(self):
-        blue = []
-        yellow = []
-        for p in self.map:
-            if p[2] == 0:
-                blue.append(p)
-            if p[2] == 2:
-                yellow.append(p)
-
-        if len(blue)  > 0: blue_center = (sum([p[0] for p in blue]) / len(blue), sum([p[1] for p in blue]) / len(blue))
-        if len(yellow )>0: yellow_center = (sum([p[0] for p in yellow]) / len(yellow), sum([p[1] for p in yellow]) / len(yellow))
-        # maybe try this instead of atan2, if performance is bad (couldn't get this to work first time)
-        # https://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
-        # currently sorting points by angle relative to center of all points => should work for simple polygons
-        blue.sort(key=lambda p: angle if (angle := atan2(p[1] - blue_center[1], p[0] - blue_center[0])) >= 0
-            else 2 * pi + angle)
-        blue.append(blue[0])
-        yellow.sort(key=lambda p: angle if (angle := atan2(p[1] - yellow_center[1], p[0] - yellow_center[0])) >= 0
-            else 2 * pi + angle)
-        yellow.append(yellow[0])
-
-        polylines = Polylines()
-        polygon = Polygon()
-        polygon.points = blue
-        polylines.blue = polygon
-        polygon = Polygon()
-        polygon.points = yellow
-        polylines.yellow = polygon
-        self.publisher_polylines.publish(polylines)
-"""
 
 def main(args=None):
     rclpy.init(args=args)
