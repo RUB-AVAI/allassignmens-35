@@ -203,6 +203,14 @@ class MainWindow(QWidget):
             data = []
             for point in msg.data:
                 data.append([point.x, point.y, point.c])
+
+            #Get X and Y  values
+            x_values = [point[0] for point in data]
+            y_values = [point[1] for point in data]
+
+            #Get indices of points with class 4
+            class_4_indices = [i for i, point in enumerate(data) if point[2] == 4]
+
             turtlestate = msg.turtlestate
             #colors = ['blue', 'orange', 'yellow', 'black']
             df = pd.DataFrame(data)
@@ -245,6 +253,8 @@ class MainWindow(QWidget):
             ax.add_line(line3)
             ax.set_xlim([0,10.2])
             ax.set_ylim([0,10.2])
+            if class_4_indices:
+                ax.plot([x_values[i] for i in class_4_indices[:-1]], [y_values[i] for i in class_4_indices[:-1]])
             self.canvas.draw()
 
 
