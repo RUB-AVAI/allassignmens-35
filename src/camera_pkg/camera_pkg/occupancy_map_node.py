@@ -4,6 +4,7 @@ from rclpy.node import Node
 from avai_messages.msg import PointArray, ClassedPoint, FloatArray, FloatList, Point, Polygon, Polylines, TurtlebotState
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped
+from std_msgs.msg import Float64MultiArray
 import math
 from typing import Tuple, List
 from sklearn.cluster import DBSCAN
@@ -27,12 +28,14 @@ class OccupancyMapNode(Node):
         # start position (meter) in self.map and angle in degrees
         self.turtle_state = {"x": float(MAP_SIZE/2), "y": float(MAP_SIZE/2), "angle": 0}
         self.turtle_state_is_set = False
+        self.middlepoints = []
         #self.latest_centroids = []
 
         self.publisher_pointarray = self.create_publisher(PointArray, "updated_points", 10)
         self.publisher_polylines = self.create_publisher(Polylines, "polylines", 10)
         #self.subscriber_lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_lidar_values,10)
         self.subscriber_lidar = message_filters.Subscriber(self, FloatArray, "lidar_values")
+        self.subscriber_middlepoint = self.create_subscription(Float64MultiArray, "target_point", self.calculate_middlepoint, 10)
         #self.subscriber_pose = message_filters.Subscriber(self, Odometry, "/odom") # old
         self.subscriber_pose = message_filters.Subscriber(self, TransformStamped, "/turtlebot_pose")
         self.ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_lidar, self.subscriber_pose], 100, .2)
@@ -96,6 +99,13 @@ class OccupancyMapNode(Node):
         y = math.sin(absolute_angle)*data[1] + self.turtle_state["y"]
         #self.get_logger().info(f"lidar: {data[0]} {data[1]} {data[2]}")
         return [x,y,data[2]]  # {"x": x, "y": y, "classID": data[2]}
+
+    def calculate_middlepoint(self, msg):
+        middlepoint_lidar = msg.data
+        middlepoint_lidar[2] = int(middlepoint_lidar[2])
+        middlepoint_map = self.lidar_to_xy(middlepoint_lidar)
+        self.update_map(middlepoint_map)
+        self.middlepoints.append(middlepoint_map)
 
     def update_map(self, positions: List[Tuple[float, float, int]]):
         """
