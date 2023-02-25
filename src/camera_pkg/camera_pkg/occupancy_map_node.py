@@ -35,7 +35,7 @@ class OccupancyMapNode(Node):
         self.publisher_polylines = self.create_publisher(Polylines, "polylines", 10)
         #self.subscriber_lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_lidar_values,10)
         self.subscriber_lidar = message_filters.Subscriber(self, FloatArray, "lidar_values")
-        self.subscriber_middlepoint = self.create_subscription(Float64MultiArray, "target_point", self.calculate_middlepoint, 10)
+        self.subscriber_middlepoint = self.create_subscription(Float64MultiArray, "target_point", self.get_middlepoint, 10)
         #self.subscriber_pose = message_filters.Subscriber(self, Odometry, "/odom") # old
         self.subscriber_pose = message_filters.Subscriber(self, TransformStamped, "/turtlebot_pose")
         self.ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_lidar, self.subscriber_pose], 100, .2)
@@ -100,12 +100,11 @@ class OccupancyMapNode(Node):
         #self.get_logger().info(f"lidar: {data[0]} {data[1]} {data[2]}")
         return [x,y,data[2]]  # {"x": x, "y": y, "classID": data[2]}
 
-    def calculate_middlepoint(self, msg):
-        middlepoint_lidar = msg.data
-        middlepoint_lidar[2] = int(middlepoint_lidar[2])
-        middlepoint_map = self.lidar_to_xy(middlepoint_lidar)
-        self.update_map(middlepoint_map)
-        self.middlepoints.append(middlepoint_map)
+    def get_middlepoint(self, msg):
+        middlepoint_map = msg.data
+        middlepoint_map[2] = int(middlepoint_map[2])
+        self.update_map(tuple(middlepoint_map))
+        self.middlepoints.append(tuple(middlepoint_map))
 
     def update_map(self, positions: List[Tuple[float, float, int]]):
         """

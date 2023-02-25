@@ -5,6 +5,7 @@ from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from avai_messages.msg import PointArray
+from std_msgs.msg import Float64MultiArray
 import numpy
 from math import atan2, copysign, radians, cos, sin, sqrt
 import tf_transformations
@@ -26,6 +27,7 @@ class MovementController(Node):
         # wherever we get the point list
         # self.create_subscription(None,"None",self.path_callback,10)
         self.subscriber_map = self.create_subscription(PointArray, "updated_points", self.map_callback, 10)
+        self.publisher = self.create_publisher(Float64MultiArray, "target_point", 10)
 
         listener = Listener(
             on_press=self.on_press,
@@ -144,6 +146,14 @@ class MovementController(Node):
         self.get_logger().info(str(middle_point))
         if self.target is None:
             self.target = middle_point
+            middle = []
+            middle.append(self.target[0])
+            middle.append(self.target[1])
+            middle.append(4)
+            publish = Float64MultiArray()
+            publish.data = tuple(middle)
+            self.publisher.publish(publish)
+
 
 
 def main(args=None):
