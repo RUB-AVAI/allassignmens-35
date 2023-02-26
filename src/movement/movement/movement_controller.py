@@ -49,7 +49,7 @@ class MovementController(Node):
         self.target = self.path.pop()
 
     def odom_callback(self, msg):
-        self.get_logger().info("dddd")
+        #self.get_logger().info("dddd")
         if self.target is not None:
             x, y = self.target
 
@@ -60,7 +60,7 @@ class MovementController(Node):
             distance = numpy.sqrt((x - position_x) ** 2
                                   + (y - position_y) ** 2)
             self.get_logger().info(str(distance))
-            if distance < 0.05:
+            if distance < 0.02:
                 # reached target
                     self.target=None
                     #search
@@ -79,7 +79,7 @@ class MovementController(Node):
                     rad += 2. * math.pi
 
                 move = Twist()
-                move.linear.x = 0.05  # might want to change constant
+                move.linear.x = 0.03  # might want to change constant
                 move.angular.z = sin(steering_angle-theta)
 
                 self.get_logger().info(f'distance {distance} s_angle{steering_angle}, theta{theta} rad {rad}')
@@ -127,12 +127,12 @@ class MovementController(Node):
                         blue.append([point, distance])
                     if point[2] == 2:
                         yellow.append([point, distance])
-        # if len(yellow) == 0:
-        #   return  # turn slowly
-        # if len(blue) == 0:
-        #   return  # turn slowly in the other direction
 
-        self.get_logger().info(str(fronts))
+        if len(yellow) == 0:
+            return  # turn slowly
+        if len(blue) == 0:
+            return  # turn slowly in the other direction
+
         yellow.sort(key=lambda x: x[1])
         blue.sort(key=lambda x: x[1])
 
@@ -144,15 +144,16 @@ class MovementController(Node):
         middle_point = ((min_yellow[0] - min_blue[0]) * 0.5 + min_blue[0],
                         (min_yellow[1] - min_blue[1]) * 0.5 + min_blue[1])
         self.get_logger().info(str(middle_point))
+        self.target = middle_point
         if self.target is None:
-            self.target = middle_point
+            #self.target = middle_point
             middle = []
             middle.append(self.target[0])
             middle.append(self.target[1])
             middle.append(4)
             publish = Float64MultiArray()
-            publish.data = tuple(middle)
-            self.publisher.publish(publish)
+            #publish.data = tuple(middle)
+            #self.publisher.publish(publish)
 
 
 

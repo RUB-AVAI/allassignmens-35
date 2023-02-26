@@ -128,7 +128,9 @@ class LidarFusion(Node):
                     fused.append(fused_one[0])
             #for scan in self.lidar_scan.ranges:
             """
-
+        # only accept cones with distance < distance
+        distance = 1
+        fused = [p for p in fused if p[1] < distance]
         self.get_logger().info(str(self.lidar_scan))
         self.get_logger().info(str(fused))
 

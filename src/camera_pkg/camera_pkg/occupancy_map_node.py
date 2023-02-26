@@ -61,10 +61,10 @@ class OccupancyMapNode(Node):
         r,p,y = \
             tf_transformations.euler_from_quaternion\
                 ([qw, qx, qy, qz])
-        self.get_logger().info(f"position y{y}, p{p}, r{r}")
+        #self.get_logger().info(f"position y{y}, p{p}, r{r}")
         #update turtle_state
         self.turtle_state["angle"] = math.degrees(-r)  # was (-3.14, 3.14), now counter clockwise 360
-        self.get_logger().info(f"{self.turtle_state['angle']}")
+        #self.get_logger().info(f"{self.turtle_state['angle']}")
         self.turtle_state["x"] = float(MAP_SIZE/2) - msg.transform.translation.x#msg.pose.pose.position.x
         self.turtle_state["y"] = float(MAP_SIZE/2) - msg.transform.translation.y#msg.pose.pose.position.y
         self.turtle_state_is_set = True
@@ -116,14 +116,26 @@ class OccupancyMapNode(Node):
             #self.get_logger().info(f"xyc: {xyc}")
 
            # self.map[math.floor(xyc["x"]*100/20)][math.floor(xyc["y"]*100/20)] = xyc["classID"]
+        if len(positions) <= 0:
+            return
+
+        points_to_filter = []
+        new_positions = [self.lidar_to_xy(new_lidar) for new_lidar in positions]
+        for new_pos in new_positions:
+            if new_pos[2] == 2: #only new yellow could actually be blue
+                for point in self.map:
+                    if point[2] == 0: # check only against blues
+                        distance = math.sqrt((new_pos[0]-point[0])**2+(new_pos[1]-point[1])**2)
+                        if distance < 0.15:
+                            points_to_filter.append(new_pos)
+                            #self.get_logger().info(f"new:{new_pos}, blue:{point}")
+
+        new_points = [p for p in new_positions if p not in points_to_filter]
 
         points = self.map
-        for position in positions:
-            xyc = self.lidar_to_xy(position)
-            points.append(xyc)
+        points += new_points
 
-
-        dbscan = DBSCAN(eps=0.15, min_samples=3)
+        dbscan = DBSCAN(eps=0.1, min_samples=3)
         labels = dbscan.fit_predict(points)
 
         clusters = {}
@@ -164,7 +176,7 @@ class OccupancyMapNode(Node):
         #Save latest centroids for next clustering
 
         self.map = centroids
-        self.get_logger().info(str(centroids))
+        #self.get_logger().info(str(centroids))
 
         """
         for centroid in centroids:
@@ -204,7 +216,7 @@ class OccupancyMapNode(Node):
         point_array.turtlestate = turtlestate
 
         self.publisher_pointarray.publish(point_array)
-        self.get_logger().info("Published points list")
+        #self.get_logger().info("Published points list")
 
 
 def main(args=None):
