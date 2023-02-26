@@ -29,14 +29,11 @@ class OccupancyMapNode(Node):
         self.turtle_state = {"x": float(MAP_SIZE/2), "y": float(MAP_SIZE/2), "angle": 0}
         self.turtle_state_is_set = False
         self.middlepoints = []
-        #self.latest_centroids = []
 
         self.publisher_pointarray = self.create_publisher(PointArray, "updated_points", 10)
         self.publisher_polylines = self.create_publisher(Polylines, "polylines", 10)
-        #self.subscriber_lidar = self.create_subscription(FloatArray,"lidar_values",self.callback_lidar_values,10)
         self.subscriber_lidar = message_filters.Subscriber(self, FloatArray, "lidar_values")
         self.subscriber_middlepoint = self.create_subscription(Float64MultiArray, "target_point", self.get_middlepoint, 10)
-        #self.subscriber_pose = message_filters.Subscriber(self, Odometry, "/odom") # old
         self.subscriber_pose = message_filters.Subscriber(self, TransformStamped, "/turtlebot_pose")
         self.ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_lidar, self.subscriber_pose], 100, .2)
         self.ts.registerCallback(self.callback_synchronised)
@@ -119,6 +116,7 @@ class OccupancyMapNode(Node):
         if len(positions) <= 0:
             return
 
+        # remove wrongly detected yellow cones, which probably should have been blue
         points_to_filter = []
         new_positions = [self.lidar_to_xy(new_lidar) for new_lidar in positions]
         for new_pos in new_positions:
@@ -129,6 +127,7 @@ class OccupancyMapNode(Node):
                         if distance < 0.15:
                             points_to_filter.append(new_pos)
                             #self.get_logger().info(f"new:{new_pos}, blue:{point}")
+                            break
 
         new_points = [p for p in new_positions if p not in points_to_filter]
 
@@ -169,10 +168,6 @@ class OccupancyMapNode(Node):
                 #self.get_logger().info("helooa")
                 centroids.append(centroid)
 
-        #Reset Map
-
-        #self.map = []  #[[-1] * MAP_SIZE for x in range(MAP_SIZE)]
-
         #Save latest centroids for next clustering
 
         self.map = centroids
@@ -194,16 +189,6 @@ class OccupancyMapNode(Node):
         turtlestate.angle = self.turtle_state["angle"]
 
         # add points of map
-        """for x in range(len(self.map)):
-            for y in range(len(self.map[0])):
-                if self.map[x][y] != -1:
-                    p = ClassedPoint()
-                    p.x = float(x*20/100)
-                    p.y = float(y*20/100)
-                    p.c = int(self.map[x][y])
-
-                    points.append(p)
-        """
         for point in self.map:
             cp = ClassedPoint()
             cp.x = float(point[0])
