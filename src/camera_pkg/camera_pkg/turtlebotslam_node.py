@@ -19,6 +19,8 @@ class TurtleBotPosePublisher(Node):
         self.run_timer_ = self.create_timer(0.5, self.run)
         self.current_header = None
 
+        self.get_logger().info("Turtlebot Slam Node started.")
+
     def save_header(self, msg):
         self.current_header = msg.header
 
