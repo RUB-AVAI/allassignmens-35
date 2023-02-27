@@ -5,7 +5,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image, CompressedImage
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Float64MultiArray
 from threading import Thread
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -33,6 +33,7 @@ class GuiNode(Node):
         self.bounding_boxes = []
         self.bounding_box_arrived = 0
         self.cv_bridge_ = CvBridge()
+        self.middlepoints = []
 
         #Synchronized Messages
         self.image_sub = message_filters.Subscriber(self,CompressedImage,"processed_image")
@@ -41,10 +42,15 @@ class GuiNode(Node):
 
         ts.registerCallback(self.drawBoundingBoxes)
 
+        self.subscriber_middlepoints = self.create_subscription(Float64MultiArray,"middlepoints",self.callback_polyline,10)
         #self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
         self.subscriber_Lidar = self.create_subscription(PointArray, "updated_points", self.callback_draw_map, 10)
         self.subscriber_ = self.create_subscription(CompressedImage, "processed_image", self.callback_processed_image, 10)
         self.publisher_ = self.create_publisher(Float64, "set_frequency", 10)
+
+    def callback_polyline(self,msg):
+        self.middlepoints = msg.data
+
 
     def drawBoundingBoxes(self,boundingBox, imageToDraw):
 
@@ -205,11 +211,9 @@ class MainWindow(QWidget):
                 data.append([point.x, point.y, point.c])
 
             #Get X and Y  values
-            x_values = [point[0] for point in data]
-            y_values = [point[1] for point in data]
+            x_values = [point[0] for point in self.node.middlepoints]
+            y_values = [point[1] for point in self.node.middlepoints]
 
-            #Get indices of points with class 4
-            class_4_indices = [i for i, point in enumerate(data) if point[2] == 4]
 
             turtlestate = msg.turtlestate
             #colors = ['blue', 'orange', 'yellow', 'black']
@@ -233,8 +237,6 @@ class MainWindow(QWidget):
                     colors.append("yellow")
                 if classes == 3:
                     colors.append("black")
-                if classes == 4:
-                    colors.append("red")
 
             length = 1.5
             angle = np.deg2rad(turtlestate.angle)
@@ -253,8 +255,7 @@ class MainWindow(QWidget):
             ax.add_line(line3)
             ax.set_xlim([0,10.2])
             ax.set_ylim([0,10.2])
-            if class_4_indices:
-                ax.plot([x_values[i] for i in class_4_indices[:-1]], [y_values[i] for i in class_4_indices[:-1]])
+            ax.plot(x_values, y_values,color = "red")
             self.canvas.draw()
 
 

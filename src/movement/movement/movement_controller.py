@@ -153,14 +153,14 @@ class MovementController(Node):
             middle_point = ((min_yellow[0] - min_blue[0]) * 0.5 + min_blue[0],
                             (min_yellow[1] - min_blue[1]) * 0.5 + min_blue[1])
             self.get_logger().info(str(middle_point))
+            if self.target == None:
+                middle = []
+                middle.append(middle_point[0])
+                middle.append(middle_point[1])
+                publish = Float64MultiArray()
+                publish.data = middle
+                self.publisher.publish(publish)
             self.target = middle_point
-            middle = []
-            middle.append(self.target[0])
-            middle.append(self.target[1])
-            middle.append(4.0)
-            publish = Float64MultiArray()
-            publish.data = tuple(middle)
-            self.publisher.publish(publish)
 
     def search(self,rotation):
         if self.search_counter<30:

@@ -30,6 +30,9 @@ class OccupancyMapNode(Node):
         self.turtle_state_is_set = False
         self.middlepoints = []
 
+        self.subscriber_middlepoint = self.create_subscription(Float64MultiArray, "target_point", self.get_middlepoint,
+                                                               10)
+        self.publisher_middlepoint = self.create_publisher(Float64MultiArray, "middlepoints", 10)
         self.publisher_pointarray = self.create_publisher(PointArray, "updated_points", 10)
         self.publisher_polylines = self.create_publisher(Polylines, "polylines", 10)
         self.subscriber_lidar = message_filters.Subscriber(self, FloatArray, "lidar_values")
@@ -99,9 +102,11 @@ class OccupancyMapNode(Node):
 
     def get_middlepoint(self, msg):
         middlepoint_map = msg.data
-        middlepoint_map[2] = int(middlepoint_map[2])
-        #self.update_map(tuple(middlepoint_map))
-        self.middlepoints.append(tuple(middlepoint_map))
+        # self.update_map(tuple(middlepoint_map))
+        self.middlepoints.append(middlepoint_map)
+        middle_points = Float64MultiArray()
+        middle_points.data = self.middlepoints
+        self.publisher_middlepoint(middle_points)
 
     def update_map(self, positions: List[Tuple[float, float, int]]):
         """
