@@ -21,6 +21,7 @@ class MovementController(Node):
 
         self.target = None
         self.path = None
+        self.search_counter=0
         self.twist = self.create_publisher(Twist, "/cmd_vel", 10)
         # might want to change to slam_odom
         self.subscriber_pose = self.create_subscription(TransformStamped, "/turtlebot_pose", self.odom_callback, 10)
@@ -86,6 +87,7 @@ class MovementController(Node):
                 self.get_logger().info(f' x{move.linear.x} ,z{move.angular.z}')
 
                 self.twist.publish(move)
+                self.search_counter=0
         else:
             self.twist.publish(Twist())
     def map_callback(self, msg):
@@ -129,9 +131,9 @@ class MovementController(Node):
                         yellow.append([point, distance])
         self.get_logger().info(str(fronts))
         if len(yellow) == 0:
-            return  # turn slowly
+            self.search(1) # turn slowly
         if len(blue) == 0:
-            return  # turn slowly in the other direction
+            self.search(0)  # turn slowly in the other direction
 
         yellow.sort(key=lambda x: x[1])
         blue.sort(key=lambda x: x[1])
@@ -152,6 +154,19 @@ class MovementController(Node):
         publish = Float64MultiArray()
         publish.data = tuple(middle)
         self.publisher.publish(publish)
+
+    def search(self,rotation):
+        if self.search_counter<3:
+            rotate = Twist()
+            if rotation ==0:
+                rotate.angular.z=0.2
+            elif rotation ==1:
+                rotate.angular.z=-0.2
+
+            self.search_counter+=1
+            self.twist.publish(rotate)
+
+
 
 
 
