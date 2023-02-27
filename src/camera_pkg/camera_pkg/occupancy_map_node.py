@@ -100,7 +100,7 @@ class OccupancyMapNode(Node):
     def get_middlepoint(self, msg):
         middlepoint_map = msg.data
         middlepoint_map[2] = int(middlepoint_map[2])
-        self.update_map(tuple(middlepoint_map))
+        #self.update_map(tuple(middlepoint_map))
         self.middlepoints.append(tuple(middlepoint_map))
 
     def update_map(self, positions: List[Tuple[float, float, int]]):
@@ -120,21 +120,23 @@ class OccupancyMapNode(Node):
         points_to_filter = []
         new_positions = [self.lidar_to_xy(new_lidar) for new_lidar in positions]
         for new_pos in new_positions:
-            if new_pos[2] == 2: #only new yellow could actually be blue
-                for point in self.map:
-                    if point[2] == 0: # check only against blues
-                        distance = math.sqrt((new_pos[0]-point[0])**2+(new_pos[1]-point[1])**2)
-                        if distance < 0.15:
-                            points_to_filter.append(new_pos)
-                            #self.get_logger().info(f"new:{new_pos}, blue:{point}")
-                            break
-
-        new_points = [p for p in new_positions if p not in points_to_filter]
-
+            for point in self.map:
+                if (point[2] == 0 and new_pos[2] == 2) or (point[2] == 2 and new_pos[2] == 0): # check only different colors
+                    distance = math.sqrt((new_pos[0]-point[0])**2+(new_pos[1]-point[1])**2)
+                    if distance < 0.2:
+                        points_to_filter.append(new_pos)
+                        points_to_filter.append(point)
+                        #self.get_logger().info(f"new:{new_pos}, blue:{point}")
+                        break
+        #if not points_to_filter == []:
+        #    self.get_logger().info(f"ptf:{points_to_filter}\nmap:{self.map}")
         points = self.map
-        points += new_points
+        points += new_positions
+        #points = [p for p in points if p not in points_to_filter]
+        for point in points_to_filter:
+            points.remove(point)
 
-        dbscan = DBSCAN(eps=0.1, min_samples=3)
+        dbscan = DBSCAN(eps=0.13, min_samples=3)
         labels = dbscan.fit_predict(points)
 
         clusters = {}
@@ -166,7 +168,7 @@ class OccupancyMapNode(Node):
                 centroid = np.append(centroid,points_arr[0,2])
                 #self.get_logger().info(str(centroid))
                 #self.get_logger().info("helooa")
-                centroids.append(centroid)
+                centroids.append(tuple(centroid))
 
         #Save latest centroids for next clustering
 

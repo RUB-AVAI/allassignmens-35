@@ -88,8 +88,9 @@ class MovementController(Node):
 
                 self.twist.publish(move)
                 self.search_counter=0
-        else:
-            self.twist.publish(Twist())
+        #else:
+        #    self.twist.publish(Twist())
+
     def map_callback(self, msg):
         if len(msg.data) <= 0:
             return
@@ -110,7 +111,7 @@ class MovementController(Node):
         # use a 90 degree vector to decide if a point is in front of the bot or not
         # vector goes from bot position to a point (x2,y2) in the direction of the vector
         vect_angle = radians(turtlestate["angle"]+90)
-        self.get_logger().info(f'vec{math.degrees(vect_angle)} turt{turtlestate["angle"]}')
+        #self.get_logger().info(f'vec{math.degrees(vect_angle)} turt{turtlestate["angle"]}')
 
 
         x2 = cos(vect_angle) * 2 + turtlestate["x"]
@@ -131,37 +132,43 @@ class MovementController(Node):
                         yellow.append([point, distance])
         self.get_logger().info(str(fronts))
         if len(yellow) == 0:
+            self.get_logger().info("no yellow cones")
+            self.twist.publish(Twist())
             self.search(1) # turn slowly
-        if len(blue) == 0:
+
+        elif len(blue) == 0:
+            self.get_logger().info("no blue cones")
+            self.twist.publish(Twist())
             self.search(0)  # turn slowly in the other direction
-
-        yellow.sort(key=lambda x: x[1])
-        blue.sort(key=lambda x: x[1])
-
-
-        min_yellow = yellow[0][0]
-        min_blue = blue[0][0]
+            #return
+        else:
+            yellow.sort(key=lambda x: x[1])
+            blue.sort(key=lambda x: x[1])
 
 
-        middle_point = ((min_yellow[0] - min_blue[0]) * 0.5 + min_blue[0],
-                        (min_yellow[1] - min_blue[1]) * 0.5 + min_blue[1])
-        self.get_logger().info(str(middle_point))
-        self.target = middle_point
-        middle = []
-        middle.append(self.target[0])
-        middle.append(self.target[1])
-        middle.append(4.0)
-        publish = Float64MultiArray()
-        publish.data = tuple(middle)
-        self.publisher.publish(publish)
+            min_yellow = yellow[0][0]
+            min_blue = blue[0][0]
+
+
+            middle_point = ((min_yellow[0] - min_blue[0]) * 0.5 + min_blue[0],
+                            (min_yellow[1] - min_blue[1]) * 0.5 + min_blue[1])
+            self.get_logger().info(str(middle_point))
+            self.target = middle_point
+            middle = []
+            middle.append(self.target[0])
+            middle.append(self.target[1])
+            middle.append(4.0)
+            publish = Float64MultiArray()
+            publish.data = tuple(middle)
+            self.publisher.publish(publish)
 
     def search(self,rotation):
-        if self.search_counter<3:
+        if self.search_counter<30:
             rotate = Twist()
             if rotation ==0:
-                rotate.angular.z=0.2
+                rotate.angular.z=0.1
             elif rotation ==1:
-                rotate.angular.z=-0.2
+                rotate.angular.z=-0.1
 
             self.search_counter+=1
             self.twist.publish(rotate)
