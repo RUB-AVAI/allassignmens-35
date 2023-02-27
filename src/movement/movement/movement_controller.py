@@ -111,8 +111,8 @@ class MovementController(Node):
         self.get_logger().info(f'vec{math.degrees(vect_angle)} turt{turtlestate["angle"]}')
 
 
-        x2 = cos(vect_angle) * 2
-        y2 = sin(vect_angle) * 2
+        x2 = cos(vect_angle) * 2 + turtlestate["x"]
+        y2 = sin(vect_angle) * 2 + turtlestate["y"]
         fronts = []
         for point in point_map:
             # check if point is "left" or "right" of vector
@@ -127,7 +127,7 @@ class MovementController(Node):
                         blue.append([point, distance])
                     if point[2] == 2:
                         yellow.append([point, distance])
-
+        self.get_logger().info(str(fronts))
         if len(yellow) == 0:
             return  # turn slowly
         if len(blue) == 0:
@@ -145,15 +145,13 @@ class MovementController(Node):
                         (min_yellow[1] - min_blue[1]) * 0.5 + min_blue[1])
         self.get_logger().info(str(middle_point))
         self.target = middle_point
-        if self.target is None:
-            #self.target = middle_point
-            middle = []
-            middle.append(self.target[0])
-            middle.append(self.target[1])
-            middle.append(4)
-            publish = Float64MultiArray()
-            #publish.data = tuple(middle)
-            #self.publisher.publish(publish)
+        middle = []
+        middle.append(self.target[0])
+        middle.append(self.target[1])
+        middle.append(4.0)
+        publish = Float64MultiArray()
+        publish.data = tuple(middle)
+        self.publisher.publish(publish)
 
 
 
