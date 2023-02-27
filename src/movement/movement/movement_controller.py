@@ -67,27 +67,26 @@ class MovementController(Node):
                     #search
 
                     # no new points
-            else:
 
-                _ , _ , theta = tf_transformations.euler_from_quaternion([ msg.transform.rotation.x, msg.transform.rotation.y,
-                                                                          msg.transform.rotation.z,msg.transform.rotation.w])
-                theta+=math.pi
-                steering_angle = atan2(y - position_y,x - position_x)
-                rad = steering_angle-theta
-                if rad > math.pi:
-                    rad -= 2. * math.pi
-                elif rad < -math.pi:
-                    rad += 2. * math.pi
+            _ , _ , theta = tf_transformations.euler_from_quaternion([ msg.transform.rotation.x, msg.transform.rotation.y,
+                                                                      msg.transform.rotation.z,msg.transform.rotation.w])
+            theta+=math.pi
+            steering_angle = atan2(y - position_y,x - position_x)
+            rad = steering_angle-theta
+            if rad > math.pi:
+                rad -= 2. * math.pi
+            elif rad < -math.pi:
+                rad += 2. * math.pi
 
-                move = Twist()
-                move.linear.x = 0.03  # might want to change constant
-                move.angular.z = sin(steering_angle-theta)
+            move = Twist()
+            move.linear.x = 0.03  # might want to change constant
+            move.angular.z = sin(steering_angle-theta)
 
-                self.get_logger().info(f'distance {distance} s_angle{steering_angle}, theta{theta} rad {rad}')
-                self.get_logger().info(f' x{move.linear.x} ,z{move.angular.z}')
+            self.get_logger().info(f'distance {distance} s_angle{steering_angle}, theta{theta} rad {rad}')
+            self.get_logger().info(f' x{move.linear.x} ,z{move.angular.z}')
 
-                self.twist.publish(move)
-                self.search_counter=0
+            self.twist.publish(move)
+            self.search_counter=0
         #else:
         #    self.twist.publish(Twist())
 
@@ -100,7 +99,8 @@ class MovementController(Node):
         turtlestate = {"x": msg.turtlestate.x, "y": msg.turtlestate.y, "angle": msg.turtlestate.angle}
 
         self.calculate_next_target(turtlestate, points)
-
+##########################calculate next point relative to the current middlepoint
+    #->angle is 90deg to vector between cones used for last middle point
     def calculate_next_target(self, turtlestate, point_map):
         distance_threshold = 10
         sign = lambda x: copysign(1, x)

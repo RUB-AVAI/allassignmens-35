@@ -42,19 +42,18 @@ class GuiNode(Node):
 
         ts.registerCallback(self.drawBoundingBoxes)
 
-        self.subscriber_middlepoints = self.create_subscription(Float64MultiArray,"middlepoints",self.callback_polyline,10)
         #self.subscriber_boundingBox = self.create_subscription(FloatArray,"bounding_box", self.callback_process_boundingBox,10)
         self.subscriber_Lidar = self.create_subscription(PointArray, "updated_points", self.callback_draw_map, 10)
         self.subscriber_ = self.create_subscription(CompressedImage, "processed_image", self.callback_processed_image, 10)
         self.publisher_ = self.create_publisher(Float64, "set_frequency", 10)
 
     def callback_polyline(self,msg):
-        self.middlepoints = msg.data
+        self.middlepoints.append(msg.data)
 
 
     def drawBoundingBoxes(self,boundingBox, imageToDraw):
 
-        self.get_logger().info("Bounding Boxes and images arrived")
+        #self.get_logger().info("Bounding Boxes and images arrived")
         processed_bounding_box = []
         for lst in boundingBox.lists:
             box = []
@@ -63,9 +62,9 @@ class GuiNode(Node):
 
             processed_bounding_box.append(box)
         self.bounding_boxes = processed_bounding_box
-        self.get_logger().info(str(self.bounding_boxes))
+        #self.get_logger().info(str(self.bounding_boxes))
         processed_image = self.cv_bridge_.compressed_imgmsg_to_cv2(imageToDraw)
-        self.get_logger().info("Bounding Boxes and Images processed")
+        #self.get_logger().info("Bounding Boxes and Images processed")
 
         for box in self.bounding_boxes:
             h, w, c = processed_image.shape
@@ -117,7 +116,7 @@ class GuiNode(Node):
         lidar_values = []
         for point in msg.data:
             lidar_values.append([point.x, point.y, point.c])
-        self.get_logger().info(str(lidar_values))
+        #self.get_logger().info(str(lidar_values))
         self.hmi.update_plot(msg)
 
     def callback_processed_image(self, msg):
@@ -210,9 +209,12 @@ class MainWindow(QWidget):
             for point in msg.data:
                 data.append([point.x, point.y, point.c])
 
+            middlepoints = []
+            for point in msg.middlepoints.points:
+                middlepoints.append((point.x, point.y))
             #Get X and Y  values
-            x_values = [point[0] for point in self.node.middlepoints]
-            y_values = [point[1] for point in self.node.middlepoints]
+            x_values = [point[0] for point in middlepoints]
+            y_values = [point[1] for point in middlepoints]
 
 
             turtlestate = msg.turtlestate
@@ -234,7 +236,7 @@ class MainWindow(QWidget):
                 if classes == 1:
                     colors.append("orange")
                 if classes == 2:
-                    colors.append("yellow")
+                    colors.append("#FFD700")
                 if classes == 3:
                     colors.append("black")
 

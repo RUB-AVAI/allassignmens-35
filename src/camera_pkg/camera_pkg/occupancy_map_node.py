@@ -32,7 +32,6 @@ class OccupancyMapNode(Node):
 
         self.subscriber_middlepoint = self.create_subscription(Float64MultiArray, "target_point", self.get_middlepoint,
                                                                10)
-        self.publisher_middlepoint = self.create_publisher(Float64MultiArray, "middlepoints", 10)
         self.publisher_pointarray = self.create_publisher(PointArray, "updated_points", 10)
         self.publisher_polylines = self.create_publisher(Polylines, "polylines", 10)
         self.subscriber_lidar = message_filters.Subscriber(self, FloatArray, "lidar_values")
@@ -84,7 +83,6 @@ class OccupancyMapNode(Node):
             lidar_values.append(tuple(lidar))
 
         self.update_map(lidar_values)
-        #self.publish_polylines()
 
     def lidar_to_xy(self, data: Tuple[float, float, int]):
         """
@@ -104,9 +102,6 @@ class OccupancyMapNode(Node):
         middlepoint_map = msg.data
         # self.update_map(tuple(middlepoint_map))
         self.middlepoints.append(middlepoint_map)
-        middle_points = Float64MultiArray()
-        middle_points.data = self.middlepoints
-        self.publisher_middlepoint(middle_points)
 
     def update_map(self, positions: List[Tuple[float, float, int]]):
         """
@@ -139,7 +134,8 @@ class OccupancyMapNode(Node):
         points += new_positions
         #points = [p for p in points if p not in points_to_filter]
         for point in points_to_filter:
-            points.remove(point)
+            if point in points:
+                points.remove(point)
 
         dbscan = DBSCAN(eps=0.13, min_samples=3)
         labels = dbscan.fit_predict(points)
@@ -206,6 +202,15 @@ class OccupancyMapNode(Node):
         point_array = PointArray()
         point_array.data = points
         point_array.turtlestate = turtlestate
+
+        polygon = Polygon()
+        polygon.points = []
+        for point in self.middlepoints:
+            p = Point()
+            p.x = point[0]
+            p.y = point[1]
+            polygon.points.append(p)
+        point_array.middlepoints = polygon
 
         self.publisher_pointarray.publish(point_array)
         #self.get_logger().info("Published points list")
