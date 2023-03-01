@@ -95,7 +95,7 @@ class LidarFusion(Node):
         fused = []
 
         for b in processed_bounding_box:
-            if b[3] > 0.15:
+            if b[3] > 0.25:
                 for obj in self.lidar_scan:
                     angle_s, angle_e, dist, = obj
                     possible_box = lin_map((angle_s + angle_e) / 2)
@@ -129,7 +129,7 @@ class LidarFusion(Node):
             #for scan in self.lidar_scan.ranges:
             """
         # only accept cones with distance < distance
-        distance = 1
+        distance = 1.5
         fused = [p for p in fused if p[1] < distance]
         self.get_logger().info(str(self.lidar_scan))
         self.get_logger().info(str(fused))

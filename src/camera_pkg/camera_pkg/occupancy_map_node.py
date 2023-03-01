@@ -14,7 +14,7 @@ import tf_transformations
 from math import atan2,pi
 
 MAP_SIZE = 10  # map is assumed 10m x 10m
-CAMERA_RANGE = 62.5  # camera field of view in degrees
+CAMERA_RANGE = 56  # camera field of view in degrees
 
 #NEED TO CHECK BOUNDS? Maybe replace array with list
 
@@ -137,7 +137,7 @@ class OccupancyMapNode(Node):
             if point in points:
                 points.remove(point)
 
-        dbscan = DBSCAN(eps=0.13, min_samples=3)
+        dbscan = DBSCAN(eps=0.15, min_samples=3)
         labels = dbscan.fit_predict(points)
 
         clusters = {}
