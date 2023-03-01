@@ -1,3 +1,3 @@
 # allassignmens-35
 allassignmens-35 created by GitHub Classroom
-[![Watch the video](https://youtu.be/JIVdeuSpd4E)]
+[<img src="https://i.ytimg.com/vi/Hc79sDi3f0U/maxresdefault.jpg" width="50%">](https://youtu.be/JIVdeuSpd4E)
