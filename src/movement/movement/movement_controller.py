@@ -101,8 +101,8 @@ class MovementController(Node):
             self.calculate_next_target(turtlestate, points, step)
             if self.target is not None:
                 break
-            else:
-                self.get_logger().info(f"linestep: {step}")
+
+            self.get_logger().info(f"linestep: {step}")
 
     def distance_between(self, p1, p2):
         return sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
@@ -110,7 +110,7 @@ class MovementController(Node):
     ##########################calculate next point relative to the current middlepoint
     # ->angle is 90deg to vector between cones used for last middle point
     def calculate_next_target(self, turtlestate, point_map, line_step):
-        distance_threshold = 1.25
+        distance_threshold = 1
         sign = lambda x: copysign(1, x)
         # self.get_logger().info(str(point_map))
         # get front points
@@ -131,6 +131,7 @@ class MovementController(Node):
             if front < 0:
                 distance = sqrt((point[0] - turtlestate["x"]) ** 2 + (point[1] - turtlestate["y"]) ** 2)
                 if distance <= distance_threshold:
+                    self.get_logger().info(f"conedistance: {distance}")
                     if point[2] == 0:
                         blue.append([point, distance])
                     if point[2] == 2:
