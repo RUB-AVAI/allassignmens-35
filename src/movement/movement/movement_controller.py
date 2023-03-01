@@ -33,6 +33,7 @@ class MovementController(Node):
         listener = Listener(
             on_press=self.on_press,
         )
+        self.get_logger().info("Movement Controller started.")
         listener.start()
 
     def on_press(self, key):
@@ -96,14 +97,20 @@ class MovementController(Node):
             points.append([point.x, point.y, point.c])
         turtlestate = {"x": msg.turtlestate.x, "y": msg.turtlestate.y, "angle": msg.turtlestate.angle}
 
-        self.calculate_next_target(turtlestate, points)
+        for step in range(5):
+            self.calculate_next_target(turtlestate, points, step)
+            if self.target is not None:
+                break
+            else:
+                self.get_logger().info(f"linestep: {step}")
 
     def distance_between(self, p1, p2):
         return sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
     ##########################calculate next point relative to the current middlepoint
     # ->angle is 90deg to vector between cones used for last middle point
-    def calculate_next_target(self, turtlestate, point_map):
+    def calculate_next_target(self, turtlestate, point_map, line_step):
+        distance_threshold = 1.25
         sign = lambda x: copysign(1, x)
         # self.get_logger().info(str(point_map))
         # get front points
@@ -112,25 +119,21 @@ class MovementController(Node):
         # use a 90 degree vector to decide if a point is in front of the bot or not
         # vector goes from bot position to a point (x2,y2) in the direction of the vector
         vect_angle = radians(turtlestate["angle"] + 90)
-        # self.get_logger().info(f'vec{math.degrees(vect_angle)} turt{turtlestate["angle"]}')
 
+        line_distance = 0.05
+        x1 = cos(turtlestate["angle"]) * line_distance*line_step + turtlestate["x"]
+        y1 = sin(turtlestate["angle"]) * line_distance*line_step + turtlestate["y"]
         x2 = cos(vect_angle) * 2 + turtlestate["x"]
         y2 = sin(vect_angle) * 2 + turtlestate["y"]
         for point in point_map:
             # check if point is "left" or "right" of vector
-            front = sign((x2 - turtlestate["x"]) * (point[1] - turtlestate["y"]) -
-                         (y2 - turtlestate["y"]) * (point[0] - turtlestate["x"]))
+            front = sign((x2 - x1) * (point[1] - y1) - (y2 - y1) * (point[0] - x1))
             if front < 0:
-                x3 = cos(turtlestate["angle"]) * 2 + turtlestate["x"]
-                y3 = sin(turtlestate["angle"]) * 2 + turtlestate["y"]
-                left = sign((x3 - turtlestate["x"]) * (point[1] - turtlestate["y"]) -
-                             (y3 - turtlestate["y"]) * (point[0] - turtlestate["x"]))
                 distance = sqrt((point[0] - turtlestate["x"]) ** 2 + (point[1] - turtlestate["y"]) ** 2)
-                if point[2] == 0:
-                    if left < 0:
+                if distance <= distance_threshold:
+                    if point[2] == 0:
                         blue.append([point, distance])
-                if point[2] == 2:
-                    if left > 0:
+                    if point[2] == 2:
                         yellow.append([point, distance])
         self.get_logger().info(f"yellow: {yellow}")
         self.get_logger().info(f"blue: {blue}")
@@ -160,7 +163,7 @@ class MovementController(Node):
                     self.target = middle_point
                 else:
                     distance_targets = self.distance_between(self.last_target, middle_point)
-                    if distance_targets > 0.05:
+                    if distance_targets > 0.1:
                         self.target = middle_point
 
                     middle = []
@@ -171,15 +174,15 @@ class MovementController(Node):
                     self.publisher.publish(publish)
 
     def search(self, rotation):
-        if self.search_counter < 30:
-            rotate = Twist()
-            if rotation == 0:
-                rotate.angular.z = 0.1
-            elif rotation == 1:
-                rotate.angular.z = -0.1
+        #if self.search_counter < 35:
+        rotate = Twist()
+        if rotation == 0:
+            rotate.angular.z = 0.1
+        elif rotation == 1:
+            rotate.angular.z = -0.1
 
-            self.search_counter += 1
-            self.twist.publish(rotate)
+        #self.search_counter += 1
+        self.twist.publish(rotate)
 
 
 def main(args=None):

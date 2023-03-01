@@ -137,7 +137,7 @@ class OccupancyMapNode(Node):
             if point in points:
                 points.remove(point)
 
-        dbscan = DBSCAN(eps=0.15, min_samples=3)
+        dbscan = DBSCAN(eps=0.15, min_samples=2)
         labels = dbscan.fit_predict(points)
 
         clusters = {}
