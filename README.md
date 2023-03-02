@@ -9,7 +9,10 @@ Autonomous driving is the future of individual mobility and all major manufactur
 
 ## Demo
 ### Simple racetrack without curves 
-[![Simple racetrack without curves](https://img.youtube.com/vi/JIVdeuSpd4E/0.jpg)](https://youtu.be/JIVdeuSpd4E "Simple racetrack without curves")
-
+<p align="center">
+  [![Simple racetrack without curves](https://img.youtube.com/vi/JIVdeuSpd4E/0.jpg)](https://youtu.be/JIVdeuSpd4E "Simple racetrack without curves")
+</p>
 ### Circle racetrack
-[![Round racetrack](https://img.youtube.com/vi/aXM5ywss980/0.jpg)](https://youtu.be/aXM5ywss980 "Round racetrack")
+<p align="center">
+  [![Round racetrack](https://img.youtube.com/vi/aXM5ywss980/0.jpg)](https://youtu.be/aXM5ywss980 "Round racetrack")
+</p>
